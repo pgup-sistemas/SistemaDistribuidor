@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+        <div class="text-muted">
+            <i class="fas fa-calendar"></i> {{ moment().format('DD/MM/YYYY HH:mm') }}
+        </div>
+    </div>
+    
+    <!-- KPI Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>R$ {{ "%.2f"|format(today_sales) }}</h4>
+                            <p class="mb-0">Vendas Hoje</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-dollar-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ today_orders }}</h4>
+                            <p class="mb-0">Pedidos Hoje</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ low_stock_count }}</h4>
+                            <p class="mb-0">Estoque Baixo</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ total_customers }}</h4>
+                            <p class="mb-0">Clientes</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Sales Chart -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Vendas dos Últimos 7 Dias</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bolt"></i> Ações Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('orders.new') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Novo Pedido
+                        </a>
+                        <a href="{{ url_for('customers.new') }}" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Novo Cliente
+                        </a>
+                        <a href="{{ url_for('products.new') }}" class="btn btn-info">
+                            <i class="fas fa-box"></i> Novo Produto
+                        </a>
+                        <a href="{{ url_for('stock.new_movement') }}" class="btn btn-warning">
+                            <i class="fas fa-warehouse"></i> Movimentar Estoque
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <!-- Recent Orders -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-clock"></i> Pedidos Recentes</h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <strong>#{{ order.id }}</strong> - {{ order.customer.name }}
+                                <br>
+                                <small class="text-muted">{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                            </div>
+                            <div class="text-end">
+                                <div>R$ {{ "%.2f"|format(order.total) }}</div>
+                                <span class="badge bg-{% if order.status == 'confirmed' %}success{% elif order.status == 'pending' %}warning{% elif order.status == 'delivered' %}primary{% else %}secondary{% endif %}">
+                                    {{ order.status|title }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted">Nenhum pedido recente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Low Stock Alert -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-exclamation-triangle text-warning"></i> Alertas de Estoque</h5>
+                </div>
+                <div class="card-body">
+                    {% if low_stock_products %}
+                        {% for product in low_stock_products[:5] %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <strong>{{ product.name }}</strong>
+                                <br>
+                                <small class="text-muted">SKU: {{ product.sku }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ product.current_stock }}</span>
+                                <br>
+                                <small class="text-muted">Mín: {{ product.minimum_stock }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if low_stock_products|length > 5 %}
+                        <div class="text-center mt-2">
+                            <a href="{{ url_for('stock.alerts') }}" class="btn btn-sm btn-outline-warning">
+                                Ver todos os alertas
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <p class="text-success">
+                            <i class="fas fa-check-circle"></i> Todos os produtos com estoque adequado
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Sales Chart
+const ctx = document.getElementById('salesChart').getContext('2d');
+const salesData = {{ sales_data | tojson }};
+
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: salesData.map(item => item.date),
+        datasets: [{
+            label: 'Vendas (R$)',
+            data: salesData.map(item => item.sales),
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+            tension: 0.1,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return 'R$ ' + value.toFixed(2);
+                    }
+                }
+            }
+        },
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Vendas: R$ ' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

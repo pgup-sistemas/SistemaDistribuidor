@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Estoque - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-warehouse"></i> Controle de Estoque</h1>
+        <div>
+            <a href="{{ url_for('stock.alerts') }}" class="btn btn-outline-warning me-2">
+                <i class="fas fa-exclamation-triangle"></i> Alertas
+            </a>
+            <a href="{{ url_for('stock.movements') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-history"></i> Movimentações
+            </a>
+            <a href="{{ url_for('stock.new_movement') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Movimentação
+            </a>
+        </div>
+    </div>
+    
+    <!-- Search -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="GET" class="d-flex">
+                <input type="text" class="form-control" name="search" 
+                       placeholder="Buscar por nome ou SKU..." value="{{ search }}">
+                <button type="submit" class="btn btn-outline-secondary ms-2">
+                    <i class="fas fa-search"></i>
+                </button>
+                {% if search %}
+                <a href="{{ url_for('stock.index') }}" class="btn btn-outline-secondary ms-1">
+                    <i class="fas fa-times"></i>
+                </a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    
+    <!-- Stock Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if products.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Produto</th>
+                            <th>Estoque Atual</th>
+                            <th>Estoque Mínimo</th>
+                            <th>Status</th>
+                            <th>Última Mov.</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products.items %}
+                        <tr class="{% if product.current_stock <= product.minimum_stock %}table-danger{% elif product.current_stock <= product.minimum_stock * 1.5 %}table-warning{% endif %}">
+                            <td><code>{{ product.sku }}</code></td>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.category %}
+                                <br><small class="text-muted">{{ product.category.name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if product.current_stock <= product.minimum_stock %}danger{% elif product.current_stock <= product.minimum_stock * 1.5 %}warning{% else %}success{% endif %} fs-6">
+                                    {{ product.current_stock }} {{ product.unit }}
+                                </span>
+                            </td>
+                            <td>{{ product.minimum_stock }} {{ product.unit }}</td>
+                            <td>
+                                {% if product.current_stock <= product.minimum_stock %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Crítico
+                                </span>
+                                {% elif product.current_stock <= product.minimum_stock * 1.5 %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation"></i> Baixo
+                                </span>
+                                {% else %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Normal
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.stock_movements %}
+                                {{ product.stock_movements[-1].created_at.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('stock.new_movement') }}?product_id={{ product.id }}" 
+                                       class="btn btn-outline-primary" title="Movimentar">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </a>
+                                    <a href="{{ url_for('stock.movements', product_id=product.id) }}" 
+                                       class="btn btn-outline-info" title="Histórico">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if products.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if products.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('stock.index', page=products.prev_num, search=search) }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in products.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != products.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('stock.index', page=page_num, search=search) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if products.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('stock.index', page=products.next_num, search=search) }}">
+                            Próxima
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-warehouse fa-3x text-muted mb-3"></i>
+                <h5>Nenhum produto encontrado</h5>
+                <p class="text-muted">
+                    {% if search %}
+                    Nenhum produto corresponde aos critérios de busca.
+                    {% else %}
+                    Cadastre produtos para gerenciar o estoque.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('products.new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Cadastrar Produto
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Usuários - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-users-cog"></i> Usuários</h1>
+        <a href="{{ url_for('users.new') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Novo Usuário
+        </a>
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            {% if users %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                            <th>Status</th>
+                            <th>Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.name }}</strong>
+                                {% if user.id == current_user.id %}
+                                <span class="badge bg-info ms-2">Você</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="badge bg-{% if user.role == 'admin' %}danger{% elif user.role == 'manager' %}warning{% elif user.role == 'attendant' %}primary{% elif user.role == 'stock_manager' %}success{% elif user.role == 'delivery' %}info{% else %}secondary{% endif %}">
+                                    {% if user.role == 'admin' %}Administrador
+                                    {% elif user.role == 'manager' %}Gerente
+                                    {% elif user.role == 'attendant' %}Atendente
+                                    {% elif user.role == 'stock_manager' %}Estoquista
+                                    {% elif user.role == 'delivery' %}Entregador
+                                    {% else %}{{ user.role }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if user.active %}success{% else %}secondary{% endif %}">
+                                    {% if user.active %}Ativo{% else %}Inativo{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('users.edit', id=user.id) }}" 
+                                       class="btn btn-outline-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if user.id != current_user.id %}
+                                    <button type="button" class="btn btn-outline-danger" 
+                                            onclick="confirmDelete({{ user.id }})" title="Excluir">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users-cog fa-3x text-muted mb-3"></i>
+                <h5>Nenhum usuário encontrado</h5>
+                <p class="text-muted">Comece adicionando usuários ao sistema.</p>
+                <a href="{{ url_for('users.new') }}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Adicionar Usuário
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Role Information -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Funções do Sistema</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><span class="badge bg-danger me-2">Administrador</span></h6>
+                            <p class="text-muted small">Acesso total ao sistema, gerenciamento de usuários e configurações.</p>
+                            
+                            <h6><span class="badge bg-warning me-2">Gerente</span></h6>
+                            <p class="text-muted small">Acesso a relatórios, backups e supervisão geral das operações.</p>
+                            
+                            <h6><span class="badge bg-primary me-2">Atendente</span></h6>
+                            <p class="text-muted small">Criação de pedidos, gestão de clientes e atendimento.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><span class="badge bg-success me-2">Estoquista</span></h6>
+                            <p class="text-muted small">Controle de estoque, movimentações e alertas de produtos.</p>
+                            
+                            <h6><span class="badge bg-info me-2">Entregador</span></h6>
+                            <p class="text-muted small">Acesso a rotas de entrega e atualização de status.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Exclusão</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja excluir este usuário?</p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Excluir</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function confirmDelete(userId) {
+    document.getElementById('deleteForm').action = '/users/' + userId + '/delete';
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}

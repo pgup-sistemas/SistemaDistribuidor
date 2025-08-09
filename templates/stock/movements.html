@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Movimentações de Estoque - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-history"></i> Movimentações de Estoque</h1>
+        <a href="{{ url_for('stock.new_movement') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Movimentação
+        </a>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="GET">
+                <select name="product_id" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos os produtos</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" {% if product.id == selected_product %}selected{% endif %}>
+                        {{ product.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Movements Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if movements.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Motivo</th>
+                            <th>Usuário</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movement in movements.items %}
+                        <tr>
+                            <td>{{ movement.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <strong>{{ movement.product.name }}</strong>
+                                <br><small class="text-muted">SKU: {{ movement.product.sku }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if movement.movement_type == 'entry' %}success{% elif movement.movement_type == 'exit' %}danger{% else %}warning{% endif %}">
+                                    {% if movement.movement_type == 'entry' %}
+                                    <i class="fas fa-plus"></i> Entrada
+                                    {% elif movement.movement_type == 'exit' %}
+                                    <i class="fas fa-minus"></i> Saída
+                                    {% else %}
+                                    <i class="fas fa-edit"></i> Ajuste
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="{% if movement.movement_type == 'entry' %}text-success{% elif movement.movement_type == 'exit' %}text-danger{% else %}text-warning{% endif %}">
+                                    {% if movement.movement_type == 'entry' %}+{% elif movement.movement_type == 'exit' %}-{% endif %}{{ movement.quantity }} {{ movement.product.unit }}
+                                </span>
+                            </td>
+                            <td>{{ movement.reason }}</td>
+                            <td>{{ movement.user.name }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if movements.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if movements.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.prev_num, product_id=selected_product) }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in movements.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != movements.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('stock.movements', page=page_num, product_id=selected_product) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if movements.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.next_num, product_id=selected_product) }}">
+                            Próxima
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h5>Nenhuma movimentação encontrada</h5>
+                <p class="text-muted">
+                    {% if selected_product %}
+                    Nenhuma movimentação encontrada para o produto selecionado.
+                    {% else %}
+                    Ainda não há movimentações de estoque registradas.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('stock.new_movement') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Movimentação
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="d-grid mt-3">
+    <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar ao Estoque
+    </a>
+</div>
+{% endblock %}

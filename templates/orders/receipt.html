@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupom - Pedido #{{ order.id }}</title>
+    <style>
+        @page {
+            size: 80mm auto;
+            margin: 5mm;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+            margin: 0;
+            padding: 0;
+            color: #000;
+            background: #fff;
+        }
+        
+        .receipt-container {
+            width: 70mm;
+            margin: 0 auto;
+            padding: 5mm;
+            background: white;
+        }
+        
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .company-name {
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+        
+        .company-info {
+            font-size: 10px;
+            line-height: 1.3;
+            margin: 2px 0;
+        }
+        
+        .order-info {
+            margin-bottom: 12px;
+            font-size: 11px;
+        }
+        
+        .order-info strong {
+            font-weight: bold;
+        }
+        
+        .items-section {
+            margin-bottom: 12px;
+        }
+        
+        .items-header {
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            padding-bottom: 2px;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+        
+        .item {
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            margin-bottom: 1px;
+        }
+        
+        .item-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+        }
+        
+        .item-qty-price {
+            flex: 1;
+        }
+        
+        .item-total {
+            font-weight: bold;
+            text-align: right;
+            min-width: 20mm;
+        }
+        
+        .item-discount {
+            color: #666;
+            font-size: 9px;
+            margin-left: 10px;
+        }
+        
+        .totals-section {
+            border-top: 1px dashed #000;
+            padding-top: 8px;
+            margin-top: 12px;
+        }
+        
+        .total-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 3px;
+            font-size: 11px;
+        }
+        
+        .total-final {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 4px 0;
+            margin: 6px 0;
+        }
+        
+        .payment-info {
+            text-align: center;
+            margin: 8px 0;
+            font-size: 11px;
+        }
+        
+        .payment-method {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .receipt-footer {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px dashed #000;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        .qr-section {
+            text-align: center;
+            margin: 8px 0;
+        }
+        
+        .notes-section {
+            margin: 8px 0;
+            padding: 6px;
+            border: 1px dashed #666;
+            font-size: 10px;
+        }
+        
+        .notes-title {
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        @media print {
+            body {
+                width: 80mm;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .receipt-container {
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+        }
+        
+        /* Thermal printer specific optimizations */
+        @media print and (max-width: 80mm) {
+            body {
+                font-size: 11px;
+            }
+            
+            .company-name {
+                font-size: 13px;
+            }
+            
+            .total-final {
+                font-size: 13px;
+            }
+        }
+        
+        .print-actions {
+            text-align: center;
+            margin: 20px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .print-actions button {
+            margin: 0 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-print {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-print:hover {
+            background: #0056b3;
+        }
+        
+        .btn-close {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-close:hover {
+            background: #545b62;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-actions no-print">
+        <button class="btn-print" onclick="window.print()">
+            <i class="fas fa-print"></i> Imprimir Cupom
+        </button>
+        <button class="btn-close" onclick="window.close()">
+            <i class="fas fa-times"></i> Fechar
+        </button>
+    </div>
+    
+    <div class="receipt-container">
+        <!-- Header -->
+        <div class="receipt-header">
+            <div class="company-name">{{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</div>
+            <div class="company-info">{{ config.COMPANY_PHONE or '(11) 99999-9999' }}</div>
+            <div class="company-info">{{ config.COMPANY_ADDRESS or 'Endereço da Empresa' }}</div>
+        </div>
+        
+        <!-- Order Information -->
+        <div class="order-info">
+            <div><strong>CUPOM FISCAL</strong></div>
+            <div><strong>Pedido:</strong> #{{ order.id }}</div>
+            <div><strong>Data:</strong> {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+            <div><strong>Cliente:</strong> {{ order.customer.name }}</div>
+            {% if order.customer.phone %}
+            <div><strong>Telefone:</strong> {{ order.customer.phone }}</div>
+            {% endif %}
+            {% if order.customer.address %}
+            <div><strong>Endereço:</strong> {{ order.customer.address }}</div>
+            {% endif %}
+            <div><strong>Atendente:</strong> {{ order.user.name }}</div>
+        </div>
+        
+        <!-- Items -->
+        <div class="items-section">
+            <div class="items-header">ITENS DO PEDIDO</div>
+            {% for item in order.order_items %}
+            <div class="item">
+                <div class="item-name">{{ item.product.name }}</div>
+                <div class="item-details">
+                    <div class="item-qty-price">
+                        {{ item.quantity }} x R$ {{ "%.2f"|format(item.unit_price) }}
+                        {% if item.discount > 0 %}
+                        <span class="item-discount">- R$ {{ "%.2f"|format(item.discount) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="item-total">R$ {{ "%.2f"|format((item.unit_price * item.quantity) - item.discount) }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Totals -->
+        <div class="totals-section">
+            {% set subtotal = order.order_items | sum(attribute='unit_price') %}
+            {% set total_discount = order.order_items | sum(attribute='discount') %}
+            
+            {% if total_discount > 0 %}
+            <div class="total-line">
+                <span>Subtotal:</span>
+                <span>R$ {{ "%.2f"|format(subtotal) }}</span>
+            </div>
+            <div class="total-line">
+                <span>Desconto:</span>
+                <span>- R$ {{ "%.2f"|format(total_discount) }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="total-line total-final">
+                <span>TOTAL:</span>
+                <span>R$ {{ "%.2f"|format(order.total) }}</span>
+            </div>
+        </div>
+        
+        <!-- Payment Method -->
+        <div class="payment-info">
+            <div>FORMA DE PAGAMENTO</div>
+            <div class="payment-method">
+                {% if order.payment_method == 'cash' %}DINHEIRO
+                {% elif order.payment_method == 'card' %}CARTÃO
+                {% elif order.payment_method == 'pix' %}PIX
+                {% elif order.payment_method == 'bank_slip' %}BOLETO
+                {% else %}{{ order.payment_method|upper }}{% endif %}
+            </div>
+        </div>
+        
+        <!-- Notes -->
+        {% if order.notes %}
+        <div class="notes-section">
+            <div class="notes-title">OBSERVAÇÕES:</div>
+            <div>{{ order.notes }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- QR Code Section (placeholder for future implementation) -->
+        <div class="qr-section">
+            <!-- QR Code would go here for order tracking -->
+            <div style="font-size: 9px; color: #666;">
+                Código do Pedido: {{ order.id }}{{ order.created_at.strftime('%d%m%Y') }}
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="receipt-footer">
+            <div><strong>OBRIGADO PELA PREFERÊNCIA!</strong></div>
+            <div>Volte sempre!</div>
+            <div style="margin-top: 6px; font-size: 8px; color: #666;">
+                Sistema de Atendimento v1.1<br>
+                Emitido em {{ order.created_at.strftime('%d/%m/%Y às %H:%M:%S') }}
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Auto-print when loaded (for thermal printers)
+        window.addEventListener('load', function() {
+            // Small delay to ensure page is fully rendered
+            setTimeout(function() {
+                // Check if this is being opened for printing
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('auto_print') === 'true') {
+                    window.print();
+                }
+            }, 500);
+        });
+        
+        // Handle print completion
+        window.addEventListener('afterprint', function() {
+            // Option to close window after printing
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('auto_close') === 'true') {
+                setTimeout(function() {
+                    window.close();
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

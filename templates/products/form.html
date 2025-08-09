@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{% if product %}Editar{% else %}Novo{% endif %} Produto - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <h4>
+                        <i class="fas fa-box"></i> 
+                        {% if product %}Editar Produto{% else %}Novo Produto{% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="sku" class="form-label">SKU *</label>
+                                    <input type="text" class="form-control" id="sku" name="sku" 
+                                           value="{{ product.sku if product else '' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Nome *</label>
+                                    <input type="text" class="form-control" id="name" name="name" 
+                                           value="{{ product.name if product else '' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Descrição</label>
+                            <textarea class="form-control" id="description" name="description" rows="3">{{ product.description if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="category_id" class="form-label">Categoria</label>
+                                    <select class="form-select" id="category_id" name="category_id">
+                                        <option value="">Selecionar categoria</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}" 
+                                                {% if product and product.category_id == category.id %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="supplier_id" class="form-label">Fornecedor</label>
+                                    <select class="form-select" id="supplier_id" name="supplier_id">
+                                        <option value="">Selecionar fornecedor</option>
+                                        {% for supplier in suppliers %}
+                                        <option value="{{ supplier.id }}" 
+                                                {% if product and product.supplier_id == supplier.id %}selected{% endif %}>
+                                            {{ supplier.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="unit" class="form-label">Unidade</label>
+                                    <select class="form-select" id="unit" name="unit">
+                                        <option value="UN" {% if not product or product.unit == 'UN' %}selected{% endif %}>Unidade</option>
+                                        <option value="KG" {% if product and product.unit == 'KG' %}selected{% endif %}>Quilograma</option>
+                                        <option value="L" {% if product and product.unit == 'L' %}selected{% endif %}>Litro</option>
+                                        <option value="M" {% if product and product.unit == 'M' %}selected{% endif %}>Metro</option>
+                                        <option value="CX" {% if product and product.unit == 'CX' %}selected{% endif %}>Caixa</option>
+                                        <option value="PCT" {% if product and product.unit == 'PCT' %}selected{% endif %}>Pacote</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="sale_price" class="form-label">Preço de Venda *</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        <input type="number" class="form-control" id="sale_price" name="sale_price" 
+                                               step="0.01" min="0" value="{{ product.sale_price if product else '' }}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="cost_price" class="form-label">Preço de Custo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">R$</span>
+                                        <input type="number" class="form-control" id="cost_price" name="cost_price" 
+                                               step="0.01" min="0" value="{{ product.cost_price if product else '' }}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="minimum_stock" class="form-label">Estoque Mínimo</label>
+                                    <input type="number" class="form-control" id="minimum_stock" name="minimum_stock" 
+                                           min="0" value="{{ product.minimum_stock if product else 0 }}">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if product %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Estoque Atual</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ product.current_stock }} {{ product.unit }}" readonly>
+                                    <div class="form-text">
+                                        Para alterar o estoque, use a função 
+                                        <a href="{{ url_for('stock.new_movement') }}">Movimentar Estoque</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Margem de Lucro</label>
+                                    <input type="text" class="form-control" id="profit_margin" readonly>
+                                    <div class="form-text">Calculada automaticamente</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Salvar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Calculate profit margin
+function calculateProfitMargin() {
+    const salePrice = parseFloat(document.getElementById('sale_price').value) || 0;
+    const costPrice = parseFloat(document.getElementById('cost_price').value) || 0;
+    
+    if (costPrice > 0 && salePrice > 0) {
+        const margin = ((salePrice - costPrice) / costPrice * 100);
+        document.getElementById('profit_margin').value = margin.toFixed(2) + '%';
+    } else {
+        document.getElementById('profit_margin').value = '';
+    }
+}
+
+// Add event listeners if we're editing a product
+{% if product %}
+document.getElementById('sale_price').addEventListener('input', calculateProfitMargin);
+document.getElementById('cost_price').addEventListener('input', calculateProfitMargin);
+
+// Calculate initial margin
+calculateProfitMargin();
+{% endif %}
+</script>
+{% endblock %}

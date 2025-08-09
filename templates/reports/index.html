@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4"><i class="fas fa-chart-bar"></i> Relatórios</h1>
+    
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-dollar-sign fa-3x text-primary mb-3"></i>
+                    <h5>Relatório de Vendas</h5>
+                    <p class="text-muted">Análise detalhada das vendas por período, método de pagamento e desempenho.</p>
+                    <a href="{{ url_for('reports.sales') }}" class="btn btn-primary">
+                        <i class="fas fa-chart-line"></i> Ver Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-boxes fa-3x text-success mb-3"></i>
+                    <h5>Relatório de Produtos</h5>
+                    <p class="text-muted">Produtos mais vendidos, estoque baixo e análise de performance.</p>
+                    <a href="{{ url_for('reports.products') }}" class="btn btn-success">
+                        <i class="fas fa-box"></i> Ver Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                    <h5>Relatório de Clientes</h5>
+                    <p class="text-muted">Clientes mais ativos, histórico de compras e análise de fidelidade.</p>
+                    <a href="{{ url_for('reports.customers') }}" class="btn btn-info">
+                        <i class="fas fa-user-friends"></i> Ver Relatório
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h4 class="mb-3">Resumo Rápido</h4>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Vendas Hoje</h6>
+                            <p class="mb-0">Acesse o relatório completo</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-calendar-day fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Produtos Ativos</h6>
+                            <p class="mb-0">Gestão completa do catálogo</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-box-open fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Base de Clientes</h6>
+                            <p class="mb-0">Análise de relacionamento</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-address-book fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>Estoque</h6>
+                            <p class="mb-0">Controle e alertas</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-warehouse fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export Options -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-download"></i> Exportações</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Todos os relatórios podem ser exportados nos seguintes formatos:</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-file-csv text-success me-2"></i>
+                                <strong>CSV</strong> - Para análise em planilhas
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                                <strong>PDF</strong> - Para impressão e apresentação
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-eye text-primary me-2"></i>
+                                <strong>Online</strong> - Visualização direta
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos do Cliente - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1><i class="fas fa-user"></i> {{ customer.name }}</h1>
+            <p class="text-muted mb-0">Histórico de pedidos</p>
+        </div>
+        <a href="{{ url_for('customers.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar aos Clientes
+        </a>
+    </div>
+    
+    <!-- Customer Info -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Informações do Cliente</h6>
+                            <p><strong>Nome:</strong> {{ customer.name }}</p>
+                            {% if customer.document %}
+                            <p><strong>Documento:</strong> {{ customer.document }}</p>
+                            {% endif %}
+                            {% if customer.phone %}
+                            <p><strong>Telefone:</strong> 
+                                <a href="tel:{{ customer.phone }}" class="text-decoration-none">{{ customer.phone }}</a>
+                            </p>
+                            {% endif %}
+                            {% if customer.email %}
+                            <p><strong>Email:</strong> 
+                                <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if customer.address %}
+                            <h6>Endereço</h6>
+                            <p>{{ customer.address }}</p>
+                            {% endif %}
+                            {% if customer.notes %}
+                            <h6>Observações</h6>
+                            <p class="text-muted">{{ customer.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Orders List -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-shopping-cart"></i> Pedidos do Cliente</h5>
+        </div>
+        <div class="card-body">
+            {% if orders.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Data</th>
+                            <th>Total</th>
+                            <th>Pagamento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                    <strong>#{{ order.id }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>R$ {{ "%.2f"|format(order.total) }}</td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {% if order.payment_method == 'cash' %}Dinheiro
+                                    {% elif order.payment_method == 'card' %}Cartão
+                                    {% elif order.payment_method == 'pix' %}PIX
+                                    {% elif order.payment_method == 'bank_slip' %}Boleto
+                                    {% else %}{{ order.payment_method }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'confirmed' %}primary{% elif order.status == 'preparing' %}info{% elif order.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {% if order.status == 'pending' %}Pendente
+                                    {% elif order.status == 'confirmed' %}Confirmado
+                                    {% elif order.status == 'preparing' %}Preparando
+                                    {% elif order.status == 'delivered' %}Entregue
+                                    {% elif order.status == 'cancelled' %}Cancelado
+                                    {% else %}{{ order.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('orders.print_receipt', id=order.id) }}" 
+                                       class="btn btn-outline-info" title="Imprimir" target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    <a href="{{ url_for('orders.send_whatsapp', id=order.id) }}" 
+                                       class="btn btn-outline-success" title="WhatsApp" target="_blank">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if orders.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if orders.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('customers.orders', id=customer.id, page=orders.prev_num) }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in orders.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != orders.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('customers.orders', id=customer.id, page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if orders.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('customers.orders', id=customer.id, page=orders.next_num) }}">
+                            Próxima
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h5>Nenhum pedido encontrado</h5>
+                <p class="text-muted">Este cliente ainda não realizou nenhum pedido.</p>
+                <a href="{{ url_for('orders.new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Pedido para este Cliente
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

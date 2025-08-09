@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block title %}Alertas de Estoque - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-exclamation-triangle text-warning"></i> Alertas de Estoque</h1>
+        <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar ao Estoque
+        </a>
+    </div>
+    
+    {% if products %}
+    <div class="alert alert-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>{{ products|length }} produto(s)</strong> com estoque baixo ou crítico encontrado(s).
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Produto</th>
+                            <th>Estoque Atual</th>
+                            <th>Estoque Mínimo</th>
+                            <th>Status</th>
+                            <th>Categoria</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr class="{% if product.current_stock == 0 %}table-danger{% elif product.current_stock <= product.minimum_stock %}table-danger{% else %}table-warning{% endif %}">
+                            <td><code>{{ product.sku }}</code></td>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.description %}
+                                <br><small class="text-muted">{{ product.description[:50] }}...</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if product.current_stock == 0 %}danger{% elif product.current_stock <= product.minimum_stock %}danger{% else %}warning{% endif %} fs-6">
+                                    {{ product.current_stock }} {{ product.unit }}
+                                </span>
+                            </td>
+                            <td>{{ product.minimum_stock }} {{ product.unit }}</td>
+                            <td>
+                                {% if product.current_stock == 0 %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times"></i> Sem Estoque
+                                </span>
+                                {% elif product.current_stock <= product.minimum_stock %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> Crítico
+                                </span>
+                                {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-exclamation"></i> Baixo
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.category %}
+                                <span class="badge bg-secondary">{{ product.category.name }}</span>
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('stock.new_movement') }}?product_id={{ product.id }}" 
+                                       class="btn btn-outline-primary" title="Repor Estoque">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    <a href="{{ url_for('products.edit', id=product.id) }}" 
+                                       class="btn btn-outline-secondary" title="Editar Produto">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ url_for('stock.movements', product_id=product.id) }}" 
+                                       class="btn btn-outline-info" title="Ver Histórico">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Produtos Críticos</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">Produtos com estoque igual ou abaixo do mínimo:</p>
+                    <h4 class="text-danger">{{ products|selectattr('current_stock', '<=', 'minimum_stock')|list|length }}</h4>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h6><i class="fas fa-exclamation"></i> Produtos em Alerta</h6>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">Produtos com estoque baixo (até 50% acima do mínimo):</p>
+                    <h4 class="text-warning">{{ products|length }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h5 class="text-success">Todos os produtos com estoque adequado!</h5>
+            <p class="text-muted">Nenhum produto precisa de reposição no momento.</p>
+            <a href="{{ url_for('stock.index') }}" class="btn btn-primary">
+                <i class="fas fa-warehouse"></i> Ver Estoque Completo
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

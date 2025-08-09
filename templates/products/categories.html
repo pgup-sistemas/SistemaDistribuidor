@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Categorias - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tags"></i> Categorias de Produtos</h1>
+        <a href="{{ url_for('products.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar aos Produtos
+        </a>
+    </div>
+    
+    <!-- Add Category Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-plus"></i> Nova Categoria</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('products.new_category') }}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" name="name" placeholder="Nome da categoria" required>
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" name="description" placeholder="Descrição (opcional)">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-plus"></i> Adicionar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Categories List -->
+    <div class="card">
+        <div class="card-body">
+            {% if categories %}
+            <div class="row">
+                {% for category in categories %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="fas fa-tag text-primary me-2"></i>
+                                {{ category.name }}
+                            </h6>
+                            {% if category.description %}
+                            <p class="card-text text-muted small">{{ category.description }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    {{ category.products|length }} produto(s)
+                                </small>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('products.index', category_id=category.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver Produtos">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-secondary" 
+                                            title="Editar (Em breve)">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5>Nenhuma categoria cadastrada</h5>
+                <p class="text-muted">Crie categorias para organizar melhor seus produtos.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

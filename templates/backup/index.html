@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Backup - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-shield-alt"></i> Backup e Restauração</h1>
+        <form method="POST" action="{{ url_for('backup.create') }}" style="display: inline;">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-plus"></i> Criar Backup
+            </button>
+        </form>
+    </div>
+    
+    <!-- Backup Information -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong>Sobre os Backups:</strong>
+                Os backups contêm todos os dados do sistema incluindo usuários, clientes, produtos, pedidos e movimentações de estoque.
+                Recomendamos realizar backups regulares para garantir a segurança dos seus dados.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Backup List -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-archive"></i> Backups Disponíveis</h5>
+        </div>
+        <div class="card-body">
+            {% if backups %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Arquivo</th>
+                            <th>Tamanho</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr>
+                            <td>
+                                <i class="fas fa-calendar me-2"></i>
+                                {{ backup.date }}
+                            </td>
+                            <td>
+                                <code>{{ backup.filename }}</code>
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ backup.size }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('backup.download', filename=backup.filename) }}" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-download"></i> Download
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-archive fa-3x text-muted mb-3"></i>
+                <h5>Nenhum backup encontrado</h5>
+                <p class="text-muted">Crie seu primeiro backup para garantir a segurança dos dados.</p>
+                <form method="POST" action="{{ url_for('backup.create') }}" style="display: inline;">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Criar Primeiro Backup
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Security Information -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h6><i class="fas fa-shield-alt"></i> Segurança</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-check text-success me-2"></i>Dados criptografados</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Backup completo do sistema</li>
+                        <li><i class="fas fa-check text-success me-2"></i>Histórico de versões</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Recomendações</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-clock text-warning me-2"></i>Backup diário recomendado</li>
+                        <li><i class="fas fa-hdd text-warning me-2"></i>Armazene em local seguro</li>
+                        <li><i class="fas fa-sync text-warning me-2"></i>Teste restaurações periodicamente</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

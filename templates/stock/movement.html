@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Nova Movimentação - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-exchange-alt"></i> Nova Movimentação de Estoque</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="mb-3">
+                            <label for="product_id" class="form-label">Produto *</label>
+                            <select class="form-select" id="product_id" name="product_id" required onchange="updateStockInfo()">
+                                <option value="">Selecionar produto</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}" 
+                                        data-stock="{{ product.current_stock }}"
+                                        data-unit="{{ product.unit }}"
+                                        {% if request.args.get('product_id') == product.id|string %}selected{% endif %}>
+                                    {{ product.name }} - {{ product.current_stock }} {{ product.unit }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3" id="stockInfo" style="display: none;">
+                            <div class="alert alert-info">
+                                <strong>Estoque atual:</strong> <span id="currentStock"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="movement_type" class="form-label">Tipo de Movimentação *</label>
+                            <select class="form-select" id="movement_type" name="movement_type" required onchange="updateQuantityLabel()">
+                                <option value="">Selecionar tipo</option>
+                                <option value="entry">Entrada - Adicionar ao estoque</option>
+                                <option value="exit">Saída - Retirar do estoque</option>
+                                <option value="adjustment">Ajuste - Definir estoque exato</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="quantity" class="form-label" id="quantityLabel">Quantidade *</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                            <div class="form-text" id="quantityHelp">Informe a quantidade</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Motivo/Observação *</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="3" required
+                                      placeholder="Ex: Compra do fornecedor, Venda, Perda, Inventário, etc."></textarea>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Registrar Movimentação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function updateStockInfo() {
+    const select = document.getElementById('product_id');
+    const stockInfo = document.getElementById('stockInfo');
+    const currentStockSpan = document.getElementById('currentStock');
+    
+    if (select.value) {
+        const option = select.options[select.selectedIndex];
+        const stock = option.dataset.stock;
+        const unit = option.dataset.unit;
+        
+        currentStockSpan.textContent = stock + ' ' + unit;
+        stockInfo.style.display = 'block';
+    } else {
+        stockInfo.style.display = 'none';
+    }
+}
+
+function updateQuantityLabel() {
+    const select = document.getElementById('movement_type');
+    const label = document.getElementById('quantityLabel');
+    const help = document.getElementById('quantityHelp');
+    const quantityInput = document.getElementById('quantity');
+    
+    switch (select.value) {
+        case 'entry':
+            label.textContent = 'Quantidade a Adicionar *';
+            help.textContent = 'Quantidade que será adicionada ao estoque atual';
+            quantityInput.min = '1';
+            break;
+        case 'exit':
+            label.textContent = 'Quantidade a Retirar *';
+            help.textContent = 'Quantidade que será retirada do estoque atual';
+            quantityInput.min = '1';
+            break;
+        case 'adjustment':
+            label.textContent = 'Estoque Final *';
+            help.textContent = 'Quantidade final que o produto deve ter em estoque';
+            quantityInput.min = '0';
+            break;
+        default:
+            label.textContent = 'Quantidade *';
+            help.textContent = 'Informe a quantidade';
+            quantityInput.min = '1';
+    }
+}
+
+// Initialize if product is pre-selected
+document.addEventListener('DOMContentLoaded', function() {
+    updateStockInfo();
+});
+</script>
+{% endblock %}

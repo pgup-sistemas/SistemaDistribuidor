@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-shopping-cart"></i> Pedidos</h1>
+        <a href="{{ url_for('orders.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Pedido
+        </a>
+    </div>
+    
+    <!-- Status Filter -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <form method="GET">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos os status</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pendente</option>
+                    <option value="confirmed" {% if selected_status == 'confirmed' %}selected{% endif %}>Confirmado</option>
+                    <option value="preparing" {% if selected_status == 'preparing' %}selected{% endif %}>Preparando</option>
+                    <option value="delivered" {% if selected_status == 'delivered' %}selected{% endif %}>Entregue</option>
+                    <option value="cancelled" {% if selected_status == 'cancelled' %}selected{% endif %}>Cancelado</option>
+                </select>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Orders Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if orders.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Data</th>
+                            <th>Cliente</th>
+                            <th>Total</th>
+                            <th>Pagamento</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('orders.view', id=order.id) }}" class="text-decoration-none">
+                                    <strong>#{{ order.id }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>
+                                <strong>{{ order.customer.name }}</strong>
+                                {% if order.customer.phone %}
+                                <br><small class="text-muted">{{ order.customer.phone }}</small>
+                                {% endif %}
+                            </td>
+                            <td>R$ {{ "%.2f"|format(order.total) }}</td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {% if order.payment_method == 'cash' %}Dinheiro
+                                    {% elif order.payment_method == 'card' %}Cartão
+                                    {% elif order.payment_method == 'pix' %}PIX
+                                    {% elif order.payment_method == 'bank_slip' %}Boleto
+                                    {% else %}{{ order.payment_method }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if order.status == 'delivered' %}success{% elif order.status == 'confirmed' %}primary{% elif order.status == 'preparing' %}info{% elif order.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                    {% if order.status == 'pending' %}Pendente
+                                    {% elif order.status == 'confirmed' %}Confirmado
+                                    {% elif order.status == 'preparing' %}Preparando
+                                    {% elif order.status == 'delivered' %}Entregue
+                                    {% elif order.status == 'cancelled' %}Cancelado
+                                    {% else %}{{ order.status }}{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('orders.view', id=order.id) }}" 
+                                       class="btn btn-outline-primary" title="Ver">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('orders.print_receipt', id=order.id) }}" 
+                                       class="btn btn-outline-info" title="Imprimir" target="_blank">
+                                        <i class="fas fa-print"></i>
+                                    </a>
+                                    <a href="{{ url_for('orders.send_whatsapp', id=order.id) }}" 
+                                       class="btn btn-outline-success" title="WhatsApp" target="_blank">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if orders.pages > 1 %}
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if orders.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('orders.index', page=orders.prev_num, status=selected_status) }}">
+                            Anterior
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in orders.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != orders.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('orders.index', page=page_num, status=selected_status) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if orders.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('orders.index', page=orders.next_num, status=selected_status) }}">
+                            Próxima
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                <h5>Nenhum pedido encontrado</h5>
+                <p class="text-muted">
+                    {% if selected_status %}
+                    Nenhum pedido encontrado com o status selecionado.
+                    {% else %}
+                    Comece criando seu primeiro pedido.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('orders.new') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Pedido
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

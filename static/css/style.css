@@ -1,0 +1,313 @@
+/* Custom Styles for Sistema Distribuidor */
+
+/* Override some Bootstrap defaults for better UX */
+.navbar-brand {
+    font-weight: bold;
+}
+
+/* Dashboard specific styles */
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    border: 1px solid rgba(0,0,0,.125);
+    transition: all 0.2s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,.15);
+}
+
+/* Table improvements */
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.075);
+}
+
+/* Status badges */
+.badge {
+    font-size: 0.75em;
+}
+
+/* Forms */
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Alert styles */
+.alert {
+    border: 1px solid;
+    border-radius: 0.375rem;
+}
+
+/* Button improvements */
+.btn {
+    transition: all 0.15s ease-in-out;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
+
+/* Print styles for receipts */
+@media print {
+    .navbar, .btn, .pagination {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}
+
+/* Receipt specific styles */
+.receipt-print {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.receipt-print .company-header {
+    text-align: center;
+    border-bottom: 1px dashed #000;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.receipt-print .items-table {
+    width: 100%;
+    font-size: 11px;
+}
+
+.receipt-print .total-section {
+    border-top: 1px dashed #000;
+    padding-top: 10px;
+    text-align: right;
+    font-weight: bold;
+}
+
+/* Mobile responsiveness improvements */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-sm > .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Utility classes */
+.text-break-word {
+    word-break: break-word;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+/* Stock status colors */
+.stock-critical {
+    color: #dc3545 !important;
+}
+
+.stock-low {
+    color: #fd7e14 !important;
+}
+
+.stock-normal {
+    color: #198754 !important;
+}
+
+/* Custom scrollbar for webkit browsers */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Animation classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Focus improvements */
+.form-control:focus, .form-select:focus, .btn:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+/* Accessibility improvements */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Enhanced error states */
+.is-invalid {
+    border-color: #dc3545;
+}
+
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
+
+/* Success states */
+.is-valid {
+    border-color: #198754;
+}
+
+.valid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #198754;
+}
+
+/* Dark theme adjustments */
+[data-bs-theme="dark"] .card {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-gray-700);
+}
+
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: var(--bs-dark);
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(255,255,255,.075);
+}
+
+/* Custom logo/brand area */
+.navbar-brand i {
+    margin-right: 0.5rem;
+}
+
+/* Improved pagination */
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    transition: all 0.15s ease-in-out;
+}
+
+/* Enhanced modals */
+.modal-content {
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* File upload styles */
+.form-control[type="file"] {
+    padding: 0.375rem 0.75rem;
+}
+
+/* Progress bars */
+.progress {
+    height: 1rem;
+    border-radius: 0.375rem;
+}
+
+/* Custom switches */
+.form-switch .form-check-input {
+    width: 2em;
+    height: 1em;
+}
+
+/* Tooltip improvements */
+.tooltip {
+    font-size: 0.875rem;
+}
+
+/* Enhanced dropdowns */
+.dropdown-menu {
+    border-radius: 0.375rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loading-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 0.25rem solid rgba(255, 255, 255, 0.3);
+    border-top: 0.25rem solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

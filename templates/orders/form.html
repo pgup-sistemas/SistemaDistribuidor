@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Novo Pedido - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h4><i class="fas fa-shopping-cart"></i> Novo Pedido</h4>
+        </div>
+        <div class="card-body">
+            <form method="POST" id="orderForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="customer_id" class="form-label">Cliente *</label>
+                            <select class="form-select" id="customer_id" name="customer_id" required>
+                                <option value="">Selecionar cliente</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="payment_method" class="form-label">Método de Pagamento *</label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="">Selecionar método</option>
+                                <option value="cash">Dinheiro</option>
+                                <option value="card">Cartão</option>
+                                <option value="pix">PIX</option>
+                                <option value="bank_slip">Boleto</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="notes" class="form-label">Observações</label>
+                    <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                </div>
+                
+                <!-- Product Selection -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Itens do Pedido</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <select class="form-select" id="product_select">
+                                    <option value="">Selecionar produto</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-name="{{ product.name }}"
+                                            data-price="{{ product.sale_price }}"
+                                            data-stock="{{ product.current_stock }}"
+                                            data-unit="{{ product.unit }}">
+                                        {{ product.name }} - R$ {{ "%.2f"|format(product.sale_price) }} ({{ product.current_stock }} {{ product.unit }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" id="quantity_input" placeholder="Qtd" min="1">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" class="form-control" id="discount_input" placeholder="Desconto" min="0" step="0.01">
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-primary" onclick="addItem()">
+                                    <i class="fas fa-plus"></i> Adicionar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Items Table -->
+                        <div class="table-responsive">
+                            <table class="table table-sm" id="itemsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Qtd</th>
+                                        <th>Preço Unit.</th>
+                                        <th>Desconto</th>
+                                        <th>Total</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-active">
+                                        <td colspan="4"><strong>Total do Pedido:</strong></td>
+                                        <td><strong id="orderTotal">R$ 0,00</strong></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <input type="hidden" name="items_data" id="items_data">
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </a>
+                    <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                        <i class="fas fa-save"></i> Criar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let orderItems = [];
+
+function addItem() {
+    const productSelect = document.getElementById('product_select');
+    const quantityInput = document.getElementById('quantity_input');
+    const discountInput = document.getElementById('discount_input');
+    
+    if (!productSelect.value || !quantityInput.value) {
+        alert('Selecione um produto e informe a quantidade');
+        return;
+    }
+    
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const productId = parseInt(productSelect.value);
+    const productName = selectedOption.dataset.name;
+    const price = parseFloat(selectedOption.dataset.price);
+    const stock = parseInt(selectedOption.dataset.stock);
+    const quantity = parseInt(quantityInput.value);
+    const discount = parseFloat(discountInput.value) || 0;
+    
+    if (quantity > stock) {
+        alert('Quantidade solicitada maior que o estoque disponível');
+        return;
+    }
+    
+    // Check if product already exists in order
+    const existingItem = orderItems.find(item => item.product_id === productId);
+    if (existingItem) {
+        existingItem.quantity += quantity;
+        existingItem.discount += discount;
+    } else {
+        orderItems.push({
+            product_id: productId,
+            product_name: productName,
+            quantity: quantity,
+            unit_price: price,
+            discount: discount
+        });
+    }
+    
+    updateItemsTable();
+    
+    // Reset form
+    productSelect.value = '';
+    quantityInput.value = '';
+    discountInput.value = '';
+}
+
+function removeItem(index) {
+    orderItems.splice(index, 1);
+    updateItemsTable();
+}
+
+function updateItemsTable() {
+    const tbody = document.getElementById('itemsTableBody');
+    const totalElement = document.getElementById('orderTotal');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    tbody.innerHTML = '';
+    let total = 0;
+    
+    orderItems.forEach((item, index) => {
+        const itemTotal = (item.unit_price * item.quantity) - item.discount;
+        total += itemTotal;
+        
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${item.product_name}</td>
+            <td>${item.quantity}</td>
+            <td>R$ ${item.unit_price.toFixed(2)}</td>
+            <td>R$ ${item.discount.toFixed(2)}</td>
+            <td>R$ ${itemTotal.toFixed(2)}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItem(${index})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+    });
+    
+    totalElement.textContent = `R$ ${total.toFixed(2)}`;
+    
+    // Update hidden input
+    document.getElementById('items_data').value = JSON.stringify(orderItems);
+    
+    // Enable/disable submit button
+    submitBtn.disabled = orderItems.length === 0;
+}
+</script>
+{% endblock %}
