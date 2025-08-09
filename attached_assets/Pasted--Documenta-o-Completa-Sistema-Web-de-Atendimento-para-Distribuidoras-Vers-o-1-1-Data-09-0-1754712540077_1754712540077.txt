@@ -1,0 +1,192 @@
+# Documentação Completa — Sistema Web de Atendimento para Distribuidoras
+
+> Versão: 1.1
+> Data: 09/08/2025
+> Stack: **Flask** (backend) + **Tailwind CSS** ou **Bootstrap** (frontend)
+
+---
+
+## 1. Visão Geral
+
+Sistema web de atendimento para distribuidoras de bebidas, água, gás, ração e entregas, com integração ao WhatsApp Web, emissão de pedidos em formato cupom, controle de estoque, gestão de clientes, relatórios de vendas, controle fiscal básico e gestão de usuários.
+
+Público-alvo: pequenos e médios distribuidores.
+
+---
+
+## 2. Funcionalidades Principais
+
+* **Autenticação:** Login/senha, recuperação de senha, roles.
+* **Gestão de usuários:** Administrador, Atendente, Estoquista, Entregador, Gerente.
+* **Gestão de clientes:** Cadastro, histórico de pedidos, endereço, telefone.
+* **Catálogo de produtos:** Cadastro, foto, preço, estoque mínimo, categorias.
+* **Controle de estoque:** Entradas, saídas, ajustes, alertas, histórico completo.
+* **Pedidos:** Criação, múltiplos métodos de pagamento (dinheiro, cartão, PIX, boleto), impressão térmica/PDF, envio via WhatsApp.
+* **Integração WhatsApp:** Link no WebApp ou API Business.
+* **Relatórios:** Vendas, estoque, giro de produtos, histórico por cliente, margens de lucro.
+* **Dashboard:** KPIs, alertas de estoque, vendas do dia.
+* **Entrega:** Rotas, status, prova de entrega (assinatura/foto).
+* **Controle fiscal básico:** Exportação de relatórios para contabilidade, integração opcional com SAT/ECF ou NF-e.
+* **Backup e restauração:** Rotina automática com opção de download.
+
+---
+
+## 3. Requisitos Funcionais
+
+1. Login e autorização por função.
+2. Cadastro e gestão de usuários e clientes.
+3. Cadastro e gestão de produtos e estoque.
+4. Registro de movimentações de estoque com histórico e justificativa.
+5. Criação e atualização de pedidos com múltiplas formas de pagamento.
+6. Impressão de pedidos em cupom/PDF.
+7. Envio de pedidos via WhatsApp.
+8. Relatórios de vendas, estoque e clientes.
+9. Exportação de relatórios fiscais básicos.
+10. Backup e restauração de dados.
+
+---
+
+## 4. Requisitos Não Funcionais
+
+* Disponibilidade 99,5%.
+* Resposta < 300ms para CRUD.
+* Responsivo para mobile/tablet.
+* Segurança com criptografia de dados.
+* Backup diário automático.
+* Escalabilidade horizontal.
+* Logs detalhados para auditoria.
+
+---
+
+## 5. Modelagem de Dados (tabelas principais)
+
+* **users**: id, nome, email, senha\_hash, role, ativo.
+* **customers**: id, nome, documento, telefone, endereço, observações.
+* **products**: id, sku, nome, preço\_venda, preço\_custo, estoque\_atual, estoque\_minimo.
+* **categories**: id, nome, descrição.
+* **suppliers**: id, nome, contato, telefone.
+* **stock\_movements**: id, produto\_id, tipo, quantidade, motivo, user\_id, criado\_em.
+* **orders**: id, cliente\_id, total, pagamento\_tipo, status, criado\_em.
+* **order\_items**: id, pedido\_id, produto\_id, quantidade, preço\_unitário, desconto.
+* **deliveries**: id, pedido\_id, entregador\_id, status, prova\_entrega.
+* **audit\_logs**: id, user\_id, ação, entidade, entidade\_id, dados\_anteriores, dados\_novos.
+
+---
+
+## 6. APIs Principais
+
+Base URL: `/api/v1`
+
+* `POST /auth/login`
+* `GET /products`
+* `POST /orders`
+* `POST /orders/{id}/print`
+* `POST /orders/{id}/send-whatsapp`
+* `GET /reports/sales`
+* `GET /reports/customers`
+* `GET /reports/stock`
+* `POST /backup/create`
+* `POST /backup/restore`
+
+---
+
+## 7. Integração com WhatsApp
+
+**Opção 1:** WhatsApp Web link (`https://web.whatsapp.com/send?phone=...`).
+**Opção 2:** API Business oficial para envio automatizado.
+
+---
+
+## 8. Layout Cupom (HTML)
+
+Largura: 48–80mm, CSS otimizado para térmica, QR code com rastreamento.
+
+---
+
+## 9. Fluxos
+
+* **Atendente:** Login → Criar pedido → Enviar WhatsApp/Imprimir.
+* **Estoquista:** Separar pedido → Atualizar status.
+* **Entregador:** Receber rota → Atualizar entrega.
+* **Gerente:** Consultar relatórios → Gerar exportações fiscais.
+* **Administrador:** Criar usuários, gerenciar permissões, restaurar backups.
+
+---
+
+## 10. Segurança
+
+* Senhas criptografadas (bcrypt).
+* RBAC (controle por função).
+* Logs de auditoria.
+* Proteção CSRF/XSS/SQL Injection.
+* Backup criptografado.
+
+---
+
+## 11. Arquitetura
+
+**Backend:** Flask (Python 3.11+), Blueprints, SQLAlchemy, Alembic, marshmallow.
+**Frontend:** Tailwind CSS ou Bootstrap, Jinja2, Alpine.js.
+**Banco:** PostgreSQL.
+**PDF:** WeasyPrint ou wkhtmltopdf.
+**Deploy:** Gunicorn + Nginx, Docker Compose/Kubernetes.
+**Monitoramento:** Prometheus + Grafana.
+
+---
+
+## 12. Estrutura de Pastas
+
+```
+app/
+  __init__.py
+  config.py
+  models/
+    user.py
+    customer.py
+    product.py
+    order.py
+    delivery.py
+  routes/
+    auth.py
+    products.py
+    orders.py
+    reports.py
+    backup.py
+  services/
+    whatsapp_service.py
+    print_service.py
+    backup_service.py
+  templates/
+    base.html
+    dashboard.html
+    order_receipt.html
+  static/
+    css/
+    js/
+  migrations/
+  tests/
+    test_auth.py
+    test_orders.py
+    test_backup.py
+```
+
+---
+
+## 13. Roadmap (MVP)
+
+1. Autenticação e cadastro de usuários.
+2. Gestão de produtos, clientes e estoque.
+3. Criação de pedidos e impressão térmica.
+4. Envio via WhatsApp.
+5. Relatórios básicos.
+6. Backup e restauração.
+
+---
+
+## 14. Critérios de Aceitação
+
+* Pedido criado → estoque atualizado → cupom gerado → WhatsApp aberto com resumo → backup atualizado.
+
+---
+
+**Fim da Documentação**
