@@ -47,6 +47,8 @@ def create_app():
     from routes.dashboard import dashboard_bp
     from routes.customers import customers_bp
     from routes.products import products_bp
+    from routes.categories import categories_bp
+    from routes.suppliers import suppliers_bp
     from routes.orders import orders_bp
     from routes.stock import stock_bp
     from routes.reports import reports_bp
@@ -57,6 +59,8 @@ def create_app():
     app.register_blueprint(dashboard_bp, url_prefix='/')
     app.register_blueprint(customers_bp, url_prefix='/customers')
     app.register_blueprint(products_bp, url_prefix='/products')
+    app.register_blueprint(categories_bp, url_prefix='/categories')
+    app.register_blueprint(suppliers_bp, url_prefix='/suppliers')
     app.register_blueprint(orders_bp, url_prefix='/orders')
     app.register_blueprint(stock_bp, url_prefix='/stock')
     app.register_blueprint(reports_bp, url_prefix='/reports')

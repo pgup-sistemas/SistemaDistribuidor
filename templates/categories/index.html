@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Categorias - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-tags"></i> Categorias</h1>
+        <a href="{{ url_for('categories.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Nova Categoria
+        </a>
+    </div>
+    
+    <!-- Search Form -->
+    <form method="GET" class="row mb-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="search" class="form-control" name="search" 
+                       placeholder="Buscar categorias..." value="{{ search }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Categories Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if categories.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Descrição</th>
+                            <th>Produtos</th>
+                            <th width="120">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category in categories.items %}
+                        <tr>
+                            <td>
+                                <strong>{{ category.name }}</strong>
+                            </td>
+                            <td>{{ category.description or '-' }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ category.products|length }} produtos</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('categories.edit', id=category.id) }}" 
+                                       class="btn btn-outline-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('categories.delete', id=category.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover esta categoria?')">
+                                        <button type="submit" class="btn btn-outline-danger" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if categories.pages > 1 %}
+            <nav aria-label="Paginação de categorias">
+                <ul class="pagination justify-content-center">
+                    {% if categories.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('categories.index', page=categories.prev_num, search=search) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in categories.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != categories.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('categories.index', page=page_num, search=search) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if categories.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('categories.index', page=categories.next_num, search=search) }}">Próximo</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhuma categoria encontrada</h5>
+                {% if search %}
+                <p>Tente ajustar sua busca ou <a href="{{ url_for('categories.index') }}">ver todas as categorias</a></p>
+                {% else %}
+                <p><a href="{{ url_for('categories.new') }}">Criar primeira categoria</a></p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

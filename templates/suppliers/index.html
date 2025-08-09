@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Fornecedores - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-truck"></i> Fornecedores</h1>
+        <a href="{{ url_for('suppliers.new') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Fornecedor
+        </a>
+    </div>
+    
+    <!-- Search Form -->
+    <form method="GET" class="row mb-4">
+        <div class="col-md-4">
+            <div class="input-group">
+                <input type="search" class="form-control" name="search" 
+                       placeholder="Buscar fornecedores..." value="{{ search }}">
+                <button class="btn btn-outline-secondary" type="submit">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </form>
+    
+    <!-- Suppliers Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if suppliers.items %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Contato</th>
+                            <th>Telefone</th>
+                            <th>Email</th>
+                            <th>Produtos</th>
+                            <th width="120">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers.items %}
+                        <tr>
+                            <td>
+                                <strong>{{ supplier.name }}</strong>
+                            </td>
+                            <td>{{ supplier.contact_name or '-' }}</td>
+                            <td>{{ supplier.phone or '-' }}</td>
+                            <td>{{ supplier.email or '-' }}</td>
+                            <td>
+                                <span class="badge bg-info">{{ supplier.products|length }} produtos</span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ url_for('suppliers.edit', id=supplier.id) }}" 
+                                       class="btn btn-outline-primary" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('suppliers.delete', id=supplier.id) }}" 
+                                          class="d-inline" onsubmit="return confirm('Tem certeza que deseja remover este fornecedor?')">
+                                        <button type="submit" class="btn btn-outline-danger" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if suppliers.pages > 1 %}
+            <nav aria-label="Paginação de fornecedores">
+                <ul class="pagination justify-content-center">
+                    {% if suppliers.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('suppliers.index', page=suppliers.prev_num, search=search) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in suppliers.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != suppliers.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('suppliers.index', page=page_num, search=search) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">…</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if suppliers.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('suppliers.index', page=suppliers.next_num, search=search) }}">Próximo</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Nenhum fornecedor encontrado</h5>
+                {% if search %}
+                <p>Tente ajustar sua busca ou <a href="{{ url_for('suppliers.index') }}">ver todos os fornecedores</a></p>
+                {% else %}
+                <p><a href="{{ url_for('suppliers.new') }}">Cadastrar primeiro fornecedor</a></p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

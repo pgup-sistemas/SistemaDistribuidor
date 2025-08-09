@@ -45,10 +45,15 @@
                             <i class="fas fa-users"></i> Clientes
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('products.index') }}">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-boxes"></i> Produtos
                         </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('products.index') }}">Produtos</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('categories.index') }}">Categorias</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('suppliers.index') }}">Fornecedores</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('stock.index') }}">
