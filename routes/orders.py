@@ -27,6 +27,9 @@ def index():
 @orders_bp.route('/new', methods=['GET', 'POST'])
 @login_required
 def new():
+    # Get pre-selected customer from URL
+    selected_customer_id = request.args.get('customer_id', type=int)
+    
     if request.method == 'POST':
         customer_id = request.form.get('customer_id', type=int)
         payment_method = request.form.get('payment_method')
@@ -132,7 +135,10 @@ def new():
     customers = Customer.query.filter_by(active=True).all()
     products = Product.query.filter_by(active=True).all()
     
-    return render_template('orders/form.html', customers=customers, products=products)
+    return render_template('orders/form.html', 
+                         customers=customers, 
+                         products=products,
+                         selected_customer_id=selected_customer_id)
 
 @orders_bp.route('/<int:id>')
 @login_required

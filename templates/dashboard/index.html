@@ -11,6 +11,69 @@
         </div>
     </div>
     
+    <!-- Quick Actions Guide -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-rocket"></i> Fluxo de Atendimento</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-user-plus fa-2x text-primary"></i>
+                                </div>
+                                <h6>1. Cliente</h6>
+                                <p class="small text-muted">Cadastre ou selecione cliente</p>
+                                <a href="{{ url_for('customers.new') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Novo Cliente
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-box fa-2x text-info"></i>
+                                </div>
+                                <h6>2. Produtos</h6>
+                                <p class="small text-muted">Verifique estoque e preços</p>
+                                <a href="{{ url_for('products.index') }}" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-boxes"></i> Ver Produtos
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-shopping-cart fa-2x text-success"></i>
+                                </div>
+                                <h6>3. Pedido</h6>
+                                <p class="small text-muted">Crie o pedido de venda</p>
+                                <a href="{{ url_for('orders.new') }}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Novo Pedido
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fab fa-whatsapp fa-2x text-success"></i>
+                                </div>
+                                <h6>4. Envio</h6>
+                                <p class="small text-muted">WhatsApp + Impressão</p>
+                                <a href="{{ url_for('orders.index') }}" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-list"></i> Ver Pedidos
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- KPI Cards -->
     <div class="row mb-4">
         <div class="col-md-3">
