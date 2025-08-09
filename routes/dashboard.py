@@ -54,6 +54,7 @@ def index():
     sales_data.reverse()
     
     return render_template('dashboard/index.html',
+                         current_datetime=datetime.utcnow(),
                          today_sales=today_sales,
                          today_orders=today_orders,
                          low_stock_count=len(low_stock_products),
