@@ -263,42 +263,27 @@
     </div>
 </form>
 
+{% block extra_scripts %}
 <script>
-// Formatação automática de campos
-document.getElementById('cnpj').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 14) {
-        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-        e.target.value = value;
-    }
-});
-
-document.getElementById('zip_code').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 8) {
-        value = value.replace(/(\d{5})(\d{3})/, '$1-$2');
-        e.target.value = value;
-    }
-});
-
-// Formatação de telefones
-function formatPhone(input) {
-    input.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 11) {
-            if (value.length <= 10) {
-                value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
-            } else {
-                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+// Inicializar validações e formatações usando a nova biblioteca
+document.addEventListener('DOMContentLoaded', function() {
+    DocumentValidator.initializeForm({
+        documentFields: ['cnpj'],
+        phoneFields: ['phone', 'mobile', 'whatsapp'],
+        emailFields: ['email'],
+        cepFields: [{
+            fieldId: 'zip_code',
+            options: {
+                addressField: 'address',
+                neighborhoodField: 'neighborhood',
+                cityField: 'city',
+                stateField: 'state',
+                nextField: 'address'
             }
-            e.target.value = value;
-        }
+        }]
     });
-}
-
-formatPhone(document.getElementById('phone'));
-formatPhone(document.getElementById('mobile'));
-formatPhone(document.getElementById('whatsapp'));
+});
 </script>
+{% endblock %}
 
 {% endblock %}

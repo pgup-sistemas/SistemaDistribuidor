@@ -29,7 +29,11 @@ def new():
         document = request.form.get('document')
         phone = request.form.get('phone')
         email = request.form.get('email')
+        cep = request.form.get('cep')
         address = request.form.get('address')
+        neighborhood = request.form.get('neighborhood')
+        city = request.form.get('city')
+        state = request.form.get('state')
         notes = request.form.get('notes')
         
         if not name:
@@ -46,7 +50,11 @@ def new():
             document=document,
             phone=phone,
             email=email,
+            cep=cep,
             address=address,
+            neighborhood=neighborhood,
+            city=city,
+            state=state,
             notes=notes
         )
         
@@ -68,7 +76,11 @@ def edit(id):
         customer.document = request.form.get('document')
         customer.phone = request.form.get('phone')
         customer.email = request.form.get('email')
+        customer.cep = request.form.get('cep')
         customer.address = request.form.get('address')
+        customer.neighborhood = request.form.get('neighborhood')
+        customer.city = request.form.get('city')
+        customer.state = request.form.get('state')
         customer.notes = request.form.get('notes')
         
         if not customer.name:

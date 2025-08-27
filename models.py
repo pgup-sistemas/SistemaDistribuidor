@@ -28,7 +28,14 @@ class Customer(db.Model):
     document = db.Column(db.String(20))
     phone = db.Column(db.String(20))
     email = db.Column(db.String(120))
-    address = db.Column(db.Text)
+    
+    # Endereço detalhado
+    cep = db.Column(db.String(9))
+    address = db.Column(db.String(200))
+    neighborhood = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(2))
+    
     notes = db.Column(db.Text)
     active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

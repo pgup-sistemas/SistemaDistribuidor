@@ -27,7 +27,8 @@
                                 <div class="mb-3">
                                     <label for="document" class="form-label">CPF/CNPJ</label>
                                     <input type="text" class="form-control" id="document" name="document" 
-                                           value="{{ customer.document if customer else '' }}">
+                                           value="{{ customer.document if customer else '' }}"
+                                           placeholder="000.000.000-00 ou 00.000.000/0000-00">
                                 </div>
                             </div>
                         </div>
@@ -37,22 +38,62 @@
                                 <div class="mb-3">
                                     <label for="phone" class="form-label">Telefone</label>
                                     <input type="tel" class="form-control" id="phone" name="phone" 
-                                           value="{{ customer.phone if customer else '' }}">
-                                    <div class="form-text">Formato: (11) 99999-9999</div>
+                                           value="{{ customer.phone if customer else '' }}"
+                                           placeholder="(11) 99999-9999">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email</label>
                                     <input type="email" class="form-control" id="email" name="email" 
-                                           value="{{ customer.email if customer else '' }}">
+                                           value="{{ customer.email if customer else '' }}"
+                                           placeholder="cliente@email.com">
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="address" class="form-label">Endereço</label>
-                            <textarea class="form-control" id="address" name="address" rows="3">{{ customer.address if customer else '' }}</textarea>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="cep" class="form-label">CEP</label>
+                                    <input type="text" class="form-control" id="cep" name="cep" 
+                                           value="{{ customer.cep if customer else '' }}"
+                                           placeholder="00000-000">
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Endereço</label>
+                                    <input type="text" class="form-control" id="address" name="address" 
+                                           value="{{ customer.address if customer else '' }}"
+                                           placeholder="Rua, Avenida...">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="neighborhood" class="form-label">Bairro</label>
+                                    <input type="text" class="form-control" id="neighborhood" name="neighborhood" 
+                                           value="{{ customer.neighborhood if customer else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">Cidade</label>
+                                    <input type="text" class="form-control" id="city" name="city" 
+                                           value="{{ customer.city if customer else '' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-3">
+                                    <label for="state" class="form-label">Estado</label>
+                                    <input type="text" class="form-control" id="state" name="state" 
+                                           value="{{ customer.state if customer else '' }}"
+                                           maxlength="2">
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="mb-3">
@@ -78,32 +119,23 @@
 
 {% block extra_scripts %}
 <script>
-// Phone number formatting
-document.getElementById('phone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length >= 11) {
-        value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
-    } else if (value.length >= 7) {
-        value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
-    } else if (value.length >= 3) {
-        value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
-    } else if (value.length >= 1) {
-        value = value.replace(/^(\d{0,2})/, '($1');
-    }
-    e.target.value = value;
-});
-
-// Document formatting (CPF/CNPJ)
-document.getElementById('document').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.length <= 11) {
-        // CPF format
-        value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    } else {
-        // CNPJ format
-        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
-    }
-    e.target.value = value;
+// Inicializar validações e formatações usando a nova biblioteca
+document.addEventListener('DOMContentLoaded', function() {
+    DocumentValidator.initializeForm({
+        documentFields: ['document'],
+        phoneFields: ['phone'],
+        emailFields: ['email'],
+        cepFields: [{
+            fieldId: 'cep',
+            options: {
+                addressField: 'address',
+                neighborhoodField: 'neighborhood',
+                cityField: 'city',
+                stateField: 'state',
+                nextField: 'address'
+            }
+        }]
+    });
 });
 </script>
 {% endblock %}
