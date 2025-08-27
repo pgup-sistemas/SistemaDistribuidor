@@ -43,7 +43,7 @@ def sales():
     total_orders = len(orders)
     
     # Sales by day
-    daily_sales = db.session.query(
+    daily_sales_raw = db.session.query(
         func.date(Order.created_at).label('date'),
         func.sum(Order.total).label('total'),
         func.count(Order.id).label('orders')
@@ -55,8 +55,11 @@ def sales():
         )
     ).group_by(func.date(Order.created_at)).order_by('date').all()
     
+    # Convert to dict for JSON serialization
+    daily_sales = [{'date': str(row.date), 'total': float(row.total), 'orders': row.orders} for row in daily_sales_raw]
+    
     # Sales by payment method
-    payment_sales = db.session.query(
+    payment_sales_raw = db.session.query(
         Order.payment_method,
         func.sum(Order.total).label('total'),
         func.count(Order.id).label('orders')
@@ -67,6 +70,9 @@ def sales():
             Order.status != 'cancelled'
         )
     ).group_by(Order.payment_method).all()
+    
+    # Convert to dict for JSON serialization
+    payment_sales = [{'payment_method': row.payment_method, 'total': float(row.total), 'orders': row.orders} for row in payment_sales_raw]
     
     if export_format == 'csv':
         return export_sales_csv(orders, start_date, end_date)
@@ -84,11 +90,12 @@ def sales():
 @login_required
 def products():
     # Most sold products
+    from models import OrderItem
     top_products = db.session.query(
         Product.name,
-        func.sum(Order.order_items.quantity).label('total_sold'),
-        func.sum(Order.order_items.quantity * Order.order_items.unit_price).label('revenue')
-    ).join(Order.order_items).join(Order).filter(
+        func.sum(OrderItem.quantity).label('total_sold'),
+        func.sum(OrderItem.quantity * OrderItem.unit_price).label('revenue')
+    ).join(OrderItem).join(Order).filter(
         Order.status != 'cancelled'
     ).group_by(Product.id, Product.name).order_by(desc('total_sold')).limit(20).all()
     
@@ -98,8 +105,11 @@ def products():
         Product.active == True
     ).all()
     
+    # Convert to dict for template
+    top_products_dict = [{'name': row.name, 'total_sold': row.total_sold, 'revenue': float(row.revenue)} for row in top_products]
+    
     return render_template('reports/products.html',
-                         top_products=top_products,
+                         top_products=top_products_dict,
                          low_stock=low_stock)
 
 @reports_bp.route('/customers')
@@ -114,7 +124,10 @@ def customers():
         Order.status != 'cancelled'
     ).group_by(Customer.id, Customer.name).order_by(desc('total_spent')).limit(20).all()
     
-    return render_template('reports/customers.html', top_customers=top_customers)
+    # Convert to dict for JSON serialization
+    top_customers_dict = [{'name': row.name, 'total_spent': float(row.total_spent), 'order_count': row.order_count} for row in top_customers]
+    
+    return render_template('reports/customers.html', top_customers=top_customers_dict)
 
 def export_sales_csv(orders, start_date, end_date):
     output = io.StringIO()
