@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Movimentações de Estoque - Sistema Distribuidor{% endblock %}
@@ -74,7 +75,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Pagination -->
             {% if movements.pages > 1 %}
             <nav>
@@ -86,7 +87,7 @@
                         </a>
                     </li>
                     {% endif %}
-                    
+
                     {% for page_num in movements.iter_pages() %}
                         {% if page_num %}
                             {% if page_num != movements.page %}
@@ -106,7 +107,7 @@
                         </li>
                         {% endif %}
                     {% endfor %}
-                    
+
                     {% if movements.has_next %}
                     <li class="page-item">
                         <a class="page-link" href="{{ url_for('stock.movements', page=movements.next_num, product_id=selected_product) }}">
@@ -117,7 +118,7 @@
                 </ul>
             </nav>
             {% endif %}
-            
+
             {% else %}
             <div class="text-center py-5">
                 <i class="fas fa-history fa-3x text-muted mb-3"></i>

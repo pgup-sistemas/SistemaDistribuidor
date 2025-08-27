@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, send_file
 from flask_login import login_required, current_user
 from models import Product, StockMovement, Category, Supplier, db
+from sqlalchemy import desc
 from decimal import Decimal
 import pandas as pd
 import os
