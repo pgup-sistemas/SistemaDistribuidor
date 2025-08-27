@@ -37,6 +37,18 @@ def create_app():
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
     
+    # Custom template filters
+    @app.template_filter('nl2br')
+    def nl2br_filter(text):
+        """Convert newlines to HTML <br> tags"""
+        if not text:
+            return ''
+        import re
+        from markupsafe import Markup
+        # Replace \r\n, \r, and \n with <br>
+        result = re.sub(r'\r\n|\r|\n', '<br>', str(text))
+        return Markup(result)
+    
     @login_manager.user_loader
     def load_user(user_id):
         from models import User
