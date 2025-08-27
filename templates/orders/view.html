@@ -123,9 +123,9 @@
                     <h5>Atualizar Status</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="{{ url_for('orders.update_status', id=order.id) }}">
+                    <form method="POST" action="{{ url_for('orders.update_status', id=order.id) }}" data-no-warning="true" onsubmit="return confirmStatusUpdate()">
                         <div class="mb-3">
-                            <select class="form-select" name="status">
+                            <select class="form-select" name="status" id="statusSelect">
                                 <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pendente</option>
                                 <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmado</option>
                                 <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparando</option>
@@ -137,6 +137,21 @@
                             <i class="fas fa-save"></i> Atualizar
                         </button>
                     </form>
+                    
+                    <script>
+                    function confirmStatusUpdate() {
+                        const statusSelect = document.getElementById('statusSelect');
+                        const newStatus = statusSelect.options[statusSelect.selectedIndex].text;
+                        const currentStatus = '{% if order.status == "pending" %}Pendente{% elif order.status == "confirmed" %}Confirmado{% elif order.status == "preparing" %}Preparando{% elif order.status == "delivered" %}Entregue{% elif order.status == "cancelled" %}Cancelado{% else %}{{ order.status }}{% endif %}';
+                        
+                        if (newStatus === currentStatus) {
+                            alert('O status já está definido como ' + currentStatus);
+                            return false;
+                        }
+                        
+                        return confirm('Deseja realmente alterar o status do pedido para "' + newStatus + '"?');
+                    }
+                    </script>
                 </div>
             </div>
             

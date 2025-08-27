@@ -576,12 +576,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Handle page unload
 window.addEventListener('beforeunload', function(e) {
-    // Check for unsaved forms
-    const forms = document.querySelectorAll('form.was-validated');
+    // Check for unsaved forms, but exclude simple action forms (like status updates)
+    const forms = document.querySelectorAll('form.was-validated:not([data-no-warning]):not([method="POST"][action*="/status"])');
     if (forms.length > 0) {
-        const message = 'Você tem alterações não salvas. Deseja realmente sair?';
-        e.returnValue = message;
-        return message;
+        // Only warn if form has actual input fields that could contain unsaved data
+        let hasInputs = false;
+        forms.forEach(form => {
+            const inputs = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
+            if (inputs.length > 1) { // More than just one field (usually the status select)
+                hasInputs = true;
+            }
+        });
+        
+        if (hasInputs) {
+            const message = 'Você tem alterações não salvas. Deseja realmente sair?';
+            e.returnValue = message;
+            return message;
+        }
     }
 });
 
