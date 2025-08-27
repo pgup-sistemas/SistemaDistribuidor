@@ -51,7 +51,7 @@
                                     {% if user.active %}Ativo{% else %}Inativo{% endif %}
                                 </span>
                             </td>
-                            <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                            <td>{{ user.created_at.strftime('%d/%m/%Y') if user.created_at else 'N/A' }}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
                                     <a href="{{ url_for('users.edit', id=user.id) }}" 
