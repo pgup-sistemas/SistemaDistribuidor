@@ -19,7 +19,7 @@
                 <select name="product_id" class="form-select" onchange="this.form.submit()">
                     <option value="">Todos os produtos</option>
                     {% for product in products %}
-                    <option value="{{ product.id }}" {% if product.id == selected_product.id if selected_product else False %}selected{% endif %}>
+                    <option value="{{ product.id }}" {% if selected_product and product.id == selected_product.id %}selected{% endif %}>
                         {{ product.name }}
                     </option>
                     {% endfor %}
