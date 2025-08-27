@@ -1,224 +1,163 @@
-
 {% extends "base.html" %}
 
-{% block title %}Importação em Massa - Sistema Distribuidor{% endblock %}
+{% block title %}Importação de Estoque - Sistema Distribuidor{% endblock %}
 
 {% block content %}
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-file-import"></i> Importação em Massa</h1>
-        <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left"></i> Voltar ao Estoque
-        </a>
+        <h1><i class="fas fa-file-import"></i> Importação de Estoque</h1>
+        <div class="btn-group">
+            <a href="{{ url_for('stock.download_template') }}" class="btn btn-info">
+                <i class="fas fa-download"></i> Baixar Modelo
+            </a>
+            <a href="{{ url_for('stock.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
     </div>
 
     <div class="row">
         <!-- Importação por Planilha -->
         <div class="col-md-6">
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-header">
-                    <h5><i class="fas fa-file-excel"></i> Importar por Planilha</h5>
+                    <h5><i class="fas fa-file-excel"></i> Importação por Planilha</h5>
                 </div>
                 <div class="card-body">
+                    <p class="text-muted">Importe produtos em massa usando uma planilha Excel ou CSV.</p>
+
                     <form method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="import_type" value="spreadsheet">
-                        
+
                         <div class="mb-3">
-                            <label for="file" class="form-label">Arquivo Excel/CSV</label>
+                            <label for="file" class="form-label">Arquivo da Planilha *</label>
                             <input type="file" class="form-control" id="file" name="file" 
+                                   accept=".xlsx,.xls,.csv" required>
+                            <div class="form-text">
+                                Formatos aceitos: .xlsx, .xls, .csv<br>
+                                <small>Colunas obrigatórias: sku, name, sale_price, quantity</small>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <strong>Colunas da planilha:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>sku*</strong> - Código do produto</li>
+                                <li><strong>name*</strong> - Nome do produto</li>
+                                <li><strong>description</strong> - Descrição</li>
+                                <li><strong>sale_price*</strong> - Preço de venda</li>
+                                <li><strong>cost_price</strong> - Preço de custo</li>
+                                <li><strong>quantity*</strong> - Quantidade</li>
+                                <li><strong>minimum_stock</strong> - Estoque mínimo</li>
+                                <li><strong>unit</strong> - Unidade (UN, KG, etc.)</li>
+                                <li><strong>category</strong> - Categoria</li>
+                                <li><strong>supplier</strong> - Fornecedor</li>
+                            </ul>
+                            <small class="text-muted">* Campos obrigatórios</small>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Importar Planilha
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Importação por Nota Fiscal -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-invoice"></i> Importação por Nota Fiscal</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Importe produtos diretamente de uma nota fiscal eletrônica.</p>
+
+                    <form method="POST" enctype="multipart/form-data">
+                        <input type="hidden" name="import_type" value="invoice">
+
+                        <div class="mb-3">
+                            <label for="supplier_id" class="form-label">Fornecedor *</label>
+                            <select class="form-control" id="supplier_id" name="supplier_id" required>
+                                <option value="">Selecione o fornecedor</option>
+                                {% for supplier in suppliers %}
+                                <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="invoice_file" class="form-label">Arquivo da Nota Fiscal *</label>
+                            <input type="file" class="form-control" id="invoice_file" name="invoice_file" 
                                    accept=".xlsx,.xls,.csv" required>
                             <div class="form-text">
                                 Formatos aceitos: .xlsx, .xls, .csv
                             </div>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload"></i> Importar Planilha
-                        </button>
-                    </form>
-                    
-                    <hr>
-                    
-                    <h6>Formato da Planilha:</h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>sku*</th>
-                                    <th>name*</th>
-                                    <th>description</th>
-                                    <th>sale_price*</th>
-                                    <th>cost_price</th>
-                                    <th>quantity*</th>
-                                    <th>minimum_stock</th>
-                                    <th>unit</th>
-                                    <th>category</th>
-                                    <th>supplier</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="text-muted">
-                                    <td>PROD001</td>
-                                    <td>Produto Exemplo</td>
-                                    <td>Descrição</td>
-                                    <td>10.50</td>
-                                    <td>8.00</td>
-                                    <td>100</td>
-                                    <td>10</td>
-                                    <td>UN</td>
-                                    <td>Categoria A</td>
-                                    <td>Fornecedor X</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <small class="text-muted">* Campos obrigatórios</small>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Importação por Nota Fiscal -->
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-receipt"></i> Importar por Nota Fiscal</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" id="invoiceForm">
-                        <input type="hidden" name="import_type" value="invoice">
-                        
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="supplier_id" class="form-label">Fornecedor</label>
-                                <select class="form-select" id="supplier_id" name="supplier_id" required>
-                                    <option value="">Selecione...</option>
-                                    {% for supplier in suppliers %}
-                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="invoice_number" class="form-label">Número da NF</label>
-                                <input type="text" class="form-control" id="invoice_number" 
-                                       name="invoice_number" required>
-                            </div>
+
+                        <div class="alert alert-warning">
+                            <strong>Colunas da nota fiscal:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>product_code</strong> - Código do produto</li>
+                                <li><strong>product_name</strong> - Nome do produto</li>
+                                <li><strong>quantity</strong> - Quantidade</li>
+                                <li><strong>unit_price</strong> - Preço unitário</li>
+                            </ul>
+                            <small class="text-muted">O preço de venda será calculado automaticamente com 30% de markup.</small>
                         </div>
-                        
-                        <h6>Produtos:</h6>
-                        <div id="products-container">
-                            <div class="product-item border rounded p-3 mb-3">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <label class="form-label">SKU do Produto</label>
-                                        <input type="text" class="form-control" 
-                                               name="product_sku_0" required>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Quantidade</label>
-                                        <input type="number" class="form-control" 
-                                               name="product_quantity_0" min="1" required>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Custo Unitário</label>
-                                        <input type="number" step="0.01" class="form-control" 
-                                               name="product_cost_0">
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-end">
-                                        <button type="button" class="btn btn-outline-danger btn-sm remove-product" 
-                                                style="display: none;">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <button type="button" class="btn btn-outline-secondary btn-sm" id="add-product">
-                                <i class="fas fa-plus"></i> Adicionar Produto
-                            </button>
-                        </div>
-                        
+
                         <button type="submit" class="btn btn-success">
-                            <i class="fas fa-file-invoice"></i> Processar Nota Fiscal
+                            <i class="fas fa-file-invoice"></i> Importar Nota Fiscal
                         </button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Download Template -->
-    <div class="row mt-4">
+
+    <!-- Instruções -->
+    <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h5><i class="fas fa-download"></i> Modelo de Planilha</h5>
+                    <h5><i class="fas fa-info-circle"></i> Instruções de Uso</h5>
                 </div>
                 <div class="card-body">
-                    <p>Para facilitar a importação, você pode baixar um modelo de planilha com as colunas corretas:</p>
-                    <a href="{{ url_for('stock.download_template') }}" class="btn btn-outline-primary">
-                        <i class="fas fa-download"></i> Baixar Modelo Excel
-                    </a>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Importação por Planilha:</h6>
+                            <ol>
+                                <li>Baixe o modelo de planilha</li>
+                                <li>Preencha os dados dos produtos</li>
+                                <li>Salve como Excel (.xlsx) ou CSV</li>
+                                <li>Faça o upload do arquivo</li>
+                                <li>Os produtos serão criados/atualizados automaticamente</li>
+                            </ol>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Importação por Nota Fiscal:</h6>
+                            <ol>
+                                <li>Selecione o fornecedor</li>
+                                <li>Prepare a planilha com os dados da NF</li>
+                                <li>Use as colunas: product_code, product_name, quantity, unit_price</li>
+                                <li>Faça o upload do arquivo</li>
+                                <li>Os produtos serão importados com preço de venda calculado</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-3">
+                        <strong>Dicas importantes:</strong>
+                        <ul class="mb-0">
+                            <li>Produtos existentes (mesmo SKU) terão o estoque somado</li>
+                            <li>Novos produtos serão criados automaticamente</li>
+                            <li>Categorias e fornecedores inexistentes serão criados</li>
+                            <li>Todas as movimentações são registradas no histórico</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-let productIndex = 1;
-
-document.getElementById('add-product').addEventListener('click', function() {
-    const container = document.getElementById('products-container');
-    const newProduct = document.createElement('div');
-    newProduct.className = 'product-item border rounded p-3 mb-3';
-    newProduct.innerHTML = `
-        <div class="row">
-            <div class="col-md-4">
-                <label class="form-label">SKU do Produto</label>
-                <input type="text" class="form-control" name="product_sku_${productIndex}" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Quantidade</label>
-                <input type="number" class="form-control" name="product_quantity_${productIndex}" min="1" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Custo Unitário</label>
-                <input type="number" step="0.01" class="form-control" name="product_cost_${productIndex}">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-product">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        </div>
-    `;
-    
-    container.appendChild(newProduct);
-    productIndex++;
-    updateRemoveButtons();
-});
-
-document.addEventListener('click', function(e) {
-    if (e.target.closest('.remove-product')) {
-        e.target.closest('.product-item').remove();
-        updateRemoveButtons();
-    }
-});
-
-function updateRemoveButtons() {
-    const items = document.querySelectorAll('.product-item');
-    items.forEach((item, index) => {
-        const removeBtn = item.querySelector('.remove-product');
-        if (items.length > 1) {
-            removeBtn.style.display = 'block';
-        } else {
-            removeBtn.style.display = 'none';
-        }
-    });
-}
-</script>
 {% endblock %}
