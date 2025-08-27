@@ -7,7 +7,7 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="fas fa-history"></i> Movimentações de Estoque</h1>
-        <a href="{{ url_for('stock.new_movement') }}" class="btn btn-primary">
+        <a href="{{ url_for('stock.movement') }}" class="btn btn-primary">
             <i class="fas fa-plus"></i> Nova Movimentação
         </a>
     </div>
@@ -19,7 +19,7 @@
                 <select name="product_id" class="form-select" onchange="this.form.submit()">
                     <option value="">Todos os produtos</option>
                     {% for product in products %}
-                    <option value="{{ product.id }}" {% if product.id == selected_product %}selected{% endif %}>
+                    <option value="{{ product.id }}" {% if product.id == selected_product.id if selected_product else False %}selected{% endif %}>
                         {{ product.name }}
                     </option>
                     {% endfor %}
@@ -36,7 +36,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
-                            <th>Data</th>
+                            <th>Data/Hora</th>
                             <th>Produto</th>
                             <th>Tipo</th>
                             <th>Quantidade</th>
@@ -64,9 +64,10 @@
                                 </span>
                             </td>
                             <td>
-                                <span class="{% if movement.movement_type == 'entry' %}text-success{% elif movement.movement_type == 'exit' %}text-danger{% else %}text-warning{% endif %}">
-                                    {% if movement.movement_type == 'entry' %}+{% elif movement.movement_type == 'exit' %}-{% endif %}{{ movement.quantity }} {{ movement.product.unit }}
+                                <span class="fw-bold {% if movement.movement_type == 'entry' %}text-success{% elif movement.movement_type == 'exit' %}text-danger{% else %}text-warning{% endif %}">
+                                    {% if movement.movement_type == 'entry' %}+{% elif movement.movement_type == 'exit' %}-{% endif %}{{ movement.quantity }}
                                 </span>
+                                {{ movement.product.unit }}
                             </td>
                             <td>{{ movement.reason }}</td>
                             <td>{{ movement.user.name }}</td>
@@ -82,7 +83,7 @@
                 <ul class="pagination justify-content-center">
                     {% if movements.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.prev_num, product_id=selected_product) }}">
+                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.prev_num, product_id=selected_product.id if selected_product else '') }}">
                             Anterior
                         </a>
                     </li>
@@ -92,7 +93,7 @@
                         {% if page_num %}
                             {% if page_num != movements.page %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('stock.movements', page=page_num, product_id=selected_product) }}">
+                                <a class="page-link" href="{{ url_for('stock.movements', page=page_num, product_id=selected_product.id if selected_product else '') }}">
                                     {{ page_num }}
                                 </a>
                             </li>
@@ -110,7 +111,7 @@
 
                     {% if movements.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.next_num, product_id=selected_product) }}">
+                        <a class="page-link" href="{{ url_for('stock.movements', page=movements.next_num, product_id=selected_product.id if selected_product else '') }}">
                             Próxima
                         </a>
                     </li>
@@ -130,7 +131,7 @@
                     Ainda não há movimentações de estoque registradas.
                     {% endif %}
                 </p>
-                <a href="{{ url_for('stock.new_movement') }}" class="btn btn-primary">
+                <a href="{{ url_for('stock.movement') }}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Criar Movimentação
                 </a>
             </div>
