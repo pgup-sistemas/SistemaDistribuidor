@@ -246,9 +246,46 @@
     <div class="receipt-container">
         <!-- Header -->
         <div class="receipt-header">
-            <div class="company-name">{{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</div>
-            <div class="company-info">{{ config.COMPANY_PHONE or '(11) 99999-9999' }}</div>
-            <div class="company-info">{{ config.COMPANY_ADDRESS or 'Endereço da Empresa' }}</div>
+            {% if company %}
+            <div class="company-name">{{ company.trade_name or company.company_name }}</div>
+            {% if company.cnpj %}
+            <div class="company-info">CNPJ: {{ company.cnpj[:2] }}.{{ company.cnpj[2:5] }}.{{ company.cnpj[5:8] }}/{{ company.cnpj[8:12] }}-{{ company.cnpj[12:] }}</div>
+            {% endif %}
+            {% if company.address %}
+            <div class="company-info">{{ company.address }}{% if company.address_number %}, {{ company.address_number }}{% endif %}</div>
+            {% endif %}
+            {% if company.neighborhood or company.city %}
+            <div class="company-info">
+                {% if company.neighborhood %}{{ company.neighborhood }}{% endif %}
+                {% if company.neighborhood and company.city %} - {% endif %}
+                {% if company.city %}{{ company.city }}{% endif %}
+                {% if company.state %}/{{ company.state }}{% endif %}
+            </div>
+            {% endif %}
+            {% if company.phone %}
+            <div class="company-info">Tel: 
+                {% if company.phone|length == 11 %}
+                ({{ company.phone[:2] }}) {{ company.phone[2:7] }}-{{ company.phone[7:] }}
+                {% elif company.phone|length == 10 %}
+                ({{ company.phone[:2] }}) {{ company.phone[2:6] }}-{{ company.phone[6:] }}
+                {% else %}
+                {{ company.phone }}
+                {% endif %}
+            </div>
+            {% endif %}
+            {% if company.email %}
+            <div class="company-info">{{ company.email }}</div>
+            {% endif %}
+            {% if company.receipt_header %}
+            <div class="company-info" style="margin-top: 6px; font-weight: bold;">
+                {{ company.receipt_header|nl2br }}
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="company-name">Sistema Distribuidor</div>
+            <div class="company-info">(11) 99999-9999</div>
+            <div class="company-info">Configure os dados da empresa</div>
+            {% endif %}
         </div>
         
         <!-- Order Information -->
@@ -320,10 +357,15 @@
         </div>
         
         <!-- Notes -->
-        {% if order.notes %}
+        {% if order.notes or (company and company.order_notes) %}
         <div class="notes-section">
             <div class="notes-title">OBSERVAÇÕES:</div>
+            {% if order.notes %}
             <div>{{ order.notes }}</div>
+            {% endif %}
+            {% if company and company.order_notes %}
+            <div>{{ company.order_notes|nl2br }}</div>
+            {% endif %}
         </div>
         {% endif %}
         
@@ -337,8 +379,17 @@
         
         <!-- Footer -->
         <div class="receipt-footer">
+            {% if company and company.receipt_footer %}
+            <div>{{ company.receipt_footer|nl2br }}</div>
+            {% if company.pix_key %}
+            <div style="margin-top: 4px;">
+                <strong>PIX:</strong> {{ company.pix_key }}
+            </div>
+            {% endif %}
+            {% else %}
             <div><strong>OBRIGADO PELA PREFERÊNCIA!</strong></div>
             <div>Volte sempre!</div>
+            {% endif %}
             <div style="margin-top: 6px; font-size: 8px; color: #666;">
                 Sistema de Atendimento v1.1<br>
                 Emitido em {{ order.created_at.strftime('%d/%m/%Y às %H:%M:%S') }}

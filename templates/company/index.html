@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações da Empresa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-building"></i> Configurações da Empresa</h2>
+    <a href="{{ url_for('company.edit') }}" class="btn btn-primary">
+        <i class="fas fa-edit"></i> {% if company %}Editar{% else %}Configurar{% endif %}
+    </a>
+</div>
+
+{% if company %}
+<div class="row">
+    <!-- Dados Gerais -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Dados Gerais</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Razão Social:</strong><br>
+                    {{ company.company_name }}
+                </div>
+                {% if company.trade_name %}
+                <div class="mb-3">
+                    <strong>Nome Fantasia:</strong><br>
+                    {{ company.trade_name }}
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>CNPJ:</strong><br>
+                    {{ company.cnpj[:2] }}.{{ company.cnpj[2:5] }}.{{ company.cnpj[5:8] }}/{{ company.cnpj[8:12] }}-{{ company.cnpj[12:] }}
+                </div>
+                {% if company.ie %}
+                <div class="mb-3">
+                    <strong>Inscrição Estadual:</strong><br>
+                    {{ company.ie }}
+                </div>
+                {% endif %}
+                {% if company.im %}
+                <div class="mb-3">
+                    <strong>Inscrição Municipal:</strong><br>
+                    {{ company.im }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Endereço -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-map-marker-alt"></i> Endereço</h5>
+            </div>
+            <div class="card-body">
+                {% if company.address %}
+                <div class="mb-3">
+                    <strong>Logradouro:</strong><br>
+                    {{ company.address }}{% if company.address_number %}, {{ company.address_number }}{% endif %}
+                    {% if company.complement %}<br>{{ company.complement }}{% endif %}
+                </div>
+                {% endif %}
+                {% if company.neighborhood %}
+                <div class="mb-3">
+                    <strong>Bairro:</strong><br>
+                    {{ company.neighborhood }}
+                </div>
+                {% endif %}
+                {% if company.city %}
+                <div class="mb-3">
+                    <strong>Cidade/UF:</strong><br>
+                    {{ company.city }}{% if company.state %}/{{ company.state }}{% endif %}
+                </div>
+                {% endif %}
+                {% if company.zip_code %}
+                <div class="mb-3">
+                    <strong>CEP:</strong><br>
+                    {{ company.zip_code[:5] }}-{{ company.zip_code[5:] }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Contatos -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-phone"></i> Contatos</h5>
+            </div>
+            <div class="card-body">
+                {% if company.phone %}
+                <div class="mb-3">
+                    <strong>Telefone:</strong><br>
+                    <a href="tel:+55{{ company.phone }}">
+                        {% if company.phone|length == 11 %}
+                        ({{ company.phone[:2] }}) {{ company.phone[2:7] }}-{{ company.phone[7:] }}
+                        {% elif company.phone|length == 10 %}
+                        ({{ company.phone[:2] }}) {{ company.phone[2:6] }}-{{ company.phone[6:] }}
+                        {% else %}
+                        {{ company.phone }}
+                        {% endif %}
+                    </a>
+                </div>
+                {% endif %}
+                {% if company.mobile %}
+                <div class="mb-3">
+                    <strong>Celular:</strong><br>
+                    <a href="tel:+55{{ company.mobile }}">
+                        {% if company.mobile|length == 11 %}
+                        ({{ company.mobile[:2] }}) {{ company.mobile[2:7] }}-{{ company.mobile[7:] }}
+                        {% else %}
+                        {{ company.mobile }}
+                        {% endif %}
+                    </a>
+                </div>
+                {% endif %}
+                {% if company.whatsapp %}
+                <div class="mb-3">
+                    <strong>WhatsApp:</strong><br>
+                    <a href="https://wa.me/55{{ company.whatsapp }}" target="_blank" class="text-success">
+                        <i class="fab fa-whatsapp"></i>
+                        {% if company.whatsapp|length == 11 %}
+                        ({{ company.whatsapp[:2] }}) {{ company.whatsapp[2:7] }}-{{ company.whatsapp[7:] }}
+                        {% else %}
+                        {{ company.whatsapp }}
+                        {% endif %}
+                    </a>
+                </div>
+                {% endif %}
+                {% if company.email %}
+                <div class="mb-3">
+                    <strong>Email:</strong><br>
+                    <a href="mailto:{{ company.email }}">{{ company.email }}</a>
+                </div>
+                {% endif %}
+                {% if company.website %}
+                <div class="mb-3">
+                    <strong>Website:</strong><br>
+                    <a href="{{ company.website }}" target="_blank">{{ company.website }}</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Dados Bancários -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-university"></i> Dados Bancários</h5>
+            </div>
+            <div class="card-body">
+                {% if company.bank_name %}
+                <div class="mb-3">
+                    <strong>Banco:</strong><br>
+                    {{ company.bank_name }}
+                </div>
+                {% endif %}
+                {% if company.bank_agency %}
+                <div class="mb-3">
+                    <strong>Agência:</strong><br>
+                    {{ company.bank_agency }}
+                </div>
+                {% endif %}
+                {% if company.bank_account %}
+                <div class="mb-3">
+                    <strong>Conta:</strong><br>
+                    {{ company.bank_account }}
+                </div>
+                {% endif %}
+                {% if company.pix_key %}
+                <div class="mb-3">
+                    <strong>Chave PIX:</strong><br>
+                    <code>{{ company.pix_key }}</code>
+                </div>
+                {% endif %}
+                {% if not (company.bank_name or company.bank_agency or company.bank_account or company.pix_key) %}
+                <p class="text-muted">Nenhum dado bancário configurado.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurações de Documentos -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-file-alt"></i> Configurações de Documentos</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <strong>Cabeçalho dos Recibos:</strong>
+                        {% if company.receipt_header %}
+                        <div class="border p-2 mt-2 bg-light">
+                            {{ company.receipt_header|nl2br }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Não configurado</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Rodapé dos Recibos:</strong>
+                        {% if company.receipt_footer %}
+                        <div class="border p-2 mt-2 bg-light">
+                            {{ company.receipt_footer|nl2br }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Não configurado</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Observações dos Pedidos:</strong>
+                        {% if company.order_notes %}
+                        <div class="border p-2 mt-2 bg-light">
+                            {{ company.order_notes|nl2br }}
+                        </div>
+                        {% else %}
+                        <p class="text-muted">Não configurado</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="fas fa-info-circle fa-2x mb-3"></i>
+    <h4>Empresa não configurada</h4>
+    <p>Configure os dados da sua empresa para personalizar recibos, pedidos e documentos.</p>
+    <a href="{{ url_for('company.edit') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Configurar Empresa
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

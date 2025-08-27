@@ -54,6 +54,7 @@ def create_app():
     from routes.reports import reports_bp
     from routes.users import users_bp
     from routes.backup import backup_bp
+    from routes.company import company_bp
     
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(dashboard_bp, url_prefix='/')
@@ -66,6 +67,7 @@ def create_app():
     app.register_blueprint(reports_bp, url_prefix='/reports')
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(backup_bp, url_prefix='/backup')
+    app.register_blueprint(company_bp, url_prefix='/company')
     
     # Create tables
     with app.app_context():

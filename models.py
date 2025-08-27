@@ -142,3 +142,45 @@ class AuditLog(db.Model):
     old_data = db.Column(db.Text)
     new_data = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Company(db.Model):
+    __tablename__ = 'company'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    company_name = db.Column(db.String(200), nullable=False)  # Razão Social
+    trade_name = db.Column(db.String(200))  # Nome Fantasia
+    cnpj = db.Column(db.String(18), unique=True, nullable=False)
+    ie = db.Column(db.String(20))  # Inscrição Estadual
+    im = db.Column(db.String(20))  # Inscrição Municipal
+    
+    # Endereço
+    address = db.Column(db.String(200))
+    address_number = db.Column(db.String(10))
+    complement = db.Column(db.String(100))
+    neighborhood = db.Column(db.String(100))
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(2))
+    zip_code = db.Column(db.String(9))
+    
+    # Contatos
+    phone = db.Column(db.String(20))
+    mobile = db.Column(db.String(20))
+    whatsapp = db.Column(db.String(20))
+    email = db.Column(db.String(120))
+    website = db.Column(db.String(200))
+    
+    # Configurações de documentos
+    receipt_header = db.Column(db.Text)  # Cabeçalho personalizado para recibos
+    receipt_footer = db.Column(db.Text)  # Rodapé personalizado para recibos
+    order_notes = db.Column(db.Text)  # Observações padrão para pedidos
+    
+    # Dados bancários
+    bank_name = db.Column(db.String(100))
+    bank_agency = db.Column(db.String(10))
+    bank_account = db.Column(db.String(20))
+    pix_key = db.Column(db.String(100))
+    
+    # Sistema
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

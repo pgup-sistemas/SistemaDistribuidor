@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}{% if company %}Editar{% else %}Configurar{% endif %} Empresa{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-building"></i> {% if company %}Editar{% else %}Configurar{% endif %} Empresa</h2>
+    <a href="{{ url_for('company.index') }}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> Voltar
+    </a>
+</div>
+
+<form method="POST" action="{{ url_for('company.save') }}">
+    <div class="row">
+        <!-- Dados Gerais -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Dados Gerais</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="company_name" class="form-label">Razão Social <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" 
+                               value="{{ company.company_name if company else '' }}" required maxlength="200">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="trade_name" class="form-label">Nome Fantasia</label>
+                        <input type="text" class="form-control" id="trade_name" name="trade_name" 
+                               value="{{ company.trade_name if company else '' }}" maxlength="200">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="cnpj" class="form-label">CNPJ <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="cnpj" name="cnpj" 
+                               value="{{ company.cnpj if company else '' }}" required 
+                               placeholder="00.000.000/0000-00" maxlength="18">
+                        <div class="form-text">Apenas números ou formatado</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="ie" class="form-label">Inscrição Estadual</label>
+                            <input type="text" class="form-control" id="ie" name="ie" 
+                                   value="{{ company.ie if company else '' }}" maxlength="20">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="im" class="form-label">Inscrição Municipal</label>
+                            <input type="text" class="form-control" id="im" name="im" 
+                                   value="{{ company.im if company else '' }}" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-map-marker-alt"></i> Endereço</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="zip_code" class="form-label">CEP</label>
+                            <input type="text" class="form-control" id="zip_code" name="zip_code" 
+                                   value="{{ company.zip_code if company else '' }}" 
+                                   placeholder="00000-000" maxlength="9">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="state" class="form-label">UF</label>
+                            <select class="form-select" id="state" name="state">
+                                <option value="">Selecione...</option>
+                                <option value="AC" {% if company and company.state == 'AC' %}selected{% endif %}>Acre</option>
+                                <option value="AL" {% if company and company.state == 'AL' %}selected{% endif %}>Alagoas</option>
+                                <option value="AP" {% if company and company.state == 'AP' %}selected{% endif %}>Amapá</option>
+                                <option value="AM" {% if company and company.state == 'AM' %}selected{% endif %}>Amazonas</option>
+                                <option value="BA" {% if company and company.state == 'BA' %}selected{% endif %}>Bahia</option>
+                                <option value="CE" {% if company and company.state == 'CE' %}selected{% endif %}>Ceará</option>
+                                <option value="DF" {% if company and company.state == 'DF' %}selected{% endif %}>Distrito Federal</option>
+                                <option value="ES" {% if company and company.state == 'ES' %}selected{% endif %}>Espírito Santo</option>
+                                <option value="GO" {% if company and company.state == 'GO' %}selected{% endif %}>Goiás</option>
+                                <option value="MA" {% if company and company.state == 'MA' %}selected{% endif %}>Maranhão</option>
+                                <option value="MT" {% if company and company.state == 'MT' %}selected{% endif %}>Mato Grosso</option>
+                                <option value="MS" {% if company and company.state == 'MS' %}selected{% endif %}>Mato Grosso do Sul</option>
+                                <option value="MG" {% if company and company.state == 'MG' %}selected{% endif %}>Minas Gerais</option>
+                                <option value="PA" {% if company and company.state == 'PA' %}selected{% endif %}>Pará</option>
+                                <option value="PB" {% if company and company.state == 'PB' %}selected{% endif %}>Paraíba</option>
+                                <option value="PR" {% if company and company.state == 'PR' %}selected{% endif %}>Paraná</option>
+                                <option value="PE" {% if company and company.state == 'PE' %}selected{% endif %}>Pernambuco</option>
+                                <option value="PI" {% if company and company.state == 'PI' %}selected{% endif %}>Piauí</option>
+                                <option value="RJ" {% if company and company.state == 'RJ' %}selected{% endif %}>Rio de Janeiro</option>
+                                <option value="RN" {% if company and company.state == 'RN' %}selected{% endif %}>Rio Grande do Norte</option>
+                                <option value="RS" {% if company and company.state == 'RS' %}selected{% endif %}>Rio Grande do Sul</option>
+                                <option value="RO" {% if company and company.state == 'RO' %}selected{% endif %}>Rondônia</option>
+                                <option value="RR" {% if company and company.state == 'RR' %}selected{% endif %}>Roraima</option>
+                                <option value="SC" {% if company and company.state == 'SC' %}selected{% endif %}>Santa Catarina</option>
+                                <option value="SP" {% if company and company.state == 'SP' %}selected{% endif %}>São Paulo</option>
+                                <option value="SE" {% if company and company.state == 'SE' %}selected{% endif %}>Sergipe</option>
+                                <option value="TO" {% if company and company.state == 'TO' %}selected{% endif %}>Tocantins</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="city" class="form-label">Cidade</label>
+                        <input type="text" class="form-control" id="city" name="city" 
+                               value="{{ company.city if company else '' }}" maxlength="100">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="neighborhood" class="form-label">Bairro</label>
+                        <input type="text" class="form-control" id="neighborhood" name="neighborhood" 
+                               value="{{ company.neighborhood if company else '' }}" maxlength="100">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="address" class="form-label">Logradouro</label>
+                            <input type="text" class="form-control" id="address" name="address" 
+                                   value="{{ company.address if company else '' }}" maxlength="200">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="address_number" class="form-label">Número</label>
+                            <input type="text" class="form-control" id="address_number" name="address_number" 
+                                   value="{{ company.address_number if company else '' }}" maxlength="10">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="complement" class="form-label">Complemento</label>
+                        <input type="text" class="form-control" id="complement" name="complement" 
+                               value="{{ company.complement if company else '' }}" maxlength="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contatos -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-phone"></i> Contatos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Telefone</label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ company.phone if company else '' }}" 
+                                   placeholder="(00) 0000-0000" maxlength="15">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="mobile" class="form-label">Celular</label>
+                            <input type="text" class="form-control" id="mobile" name="mobile" 
+                                   value="{{ company.mobile if company else '' }}" 
+                                   placeholder="(00) 00000-0000" maxlength="15">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="whatsapp" class="form-label">WhatsApp</label>
+                        <input type="text" class="form-control" id="whatsapp" name="whatsapp" 
+                               value="{{ company.whatsapp if company else '' }}" 
+                               placeholder="(00) 00000-0000" maxlength="15">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" 
+                               value="{{ company.email if company else '' }}" maxlength="120">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="website" class="form-label">Website</label>
+                        <input type="url" class="form-control" id="website" name="website" 
+                               value="{{ company.website if company else '' }}" 
+                               placeholder="https://www.exemplo.com.br" maxlength="200">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Bancários -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-university"></i> Dados Bancários</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="bank_name" class="form-label">Banco</label>
+                        <input type="text" class="form-control" id="bank_name" name="bank_name" 
+                               value="{{ company.bank_name if company else '' }}" maxlength="100">
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="bank_agency" class="form-label">Agência</label>
+                            <input type="text" class="form-control" id="bank_agency" name="bank_agency" 
+                                   value="{{ company.bank_agency if company else '' }}" maxlength="10">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="bank_account" class="form-label">Conta</label>
+                            <input type="text" class="form-control" id="bank_account" name="bank_account" 
+                                   value="{{ company.bank_account if company else '' }}" maxlength="20">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="pix_key" class="form-label">Chave PIX</label>
+                        <input type="text" class="form-control" id="pix_key" name="pix_key" 
+                               value="{{ company.pix_key if company else '' }}" maxlength="100">
+                        <div class="form-text">CPF, CNPJ, email, telefone ou chave aleatória</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configurações de Documentos -->
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-alt"></i> Configurações de Documentos</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="receipt_header" class="form-label">Cabeçalho dos Recibos</label>
+                            <textarea class="form-control" id="receipt_header" name="receipt_header" 
+                                      rows="4" placeholder="Texto que aparecerá no topo dos recibos">{{ company.receipt_header if company else '' }}</textarea>
+                            <div class="form-text">Aparecerá no topo de todos os recibos</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="receipt_footer" class="form-label">Rodapé dos Recibos</label>
+                            <textarea class="form-control" id="receipt_footer" name="receipt_footer" 
+                                      rows="4" placeholder="Texto que aparecerá no final dos recibos">{{ company.receipt_footer if company else '' }}</textarea>
+                            <div class="form-text">Aparecerá no final de todos os recibos</div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="order_notes" class="form-label">Observações dos Pedidos</label>
+                            <textarea class="form-control" id="order_notes" name="order_notes" 
+                                      rows="4" placeholder="Observações padrão para pedidos">{{ company.order_notes if company else '' }}</textarea>
+                            <div class="form-text">Observações que aparecerão nos pedidos</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center">
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="fas fa-save"></i> Salvar Configurações
+        </button>
+        <a href="{{ url_for('company.index') }}" class="btn btn-secondary btn-lg ms-2">
+            <i class="fas fa-times"></i> Cancelar
+        </a>
+    </div>
+</form>
+
+<script>
+// Formatação automática de campos
+document.getElementById('cnpj').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 14) {
+        value = value.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+        e.target.value = value;
+    }
+});
+
+document.getElementById('zip_code').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 8) {
+        value = value.replace(/(\d{5})(\d{3})/, '$1-$2');
+        e.target.value = value;
+    }
+});
+
+// Formatação de telefones
+function formatPhone(input) {
+    input.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length <= 11) {
+            if (value.length <= 10) {
+                value = value.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+            } else {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            }
+            e.target.value = value;
+        }
+    });
+}
+
+formatPhone(document.getElementById('phone'));
+formatPhone(document.getElementById('mobile'));
+formatPhone(document.getElementById('whatsapp'));
+</script>
+
+{% endblock %}

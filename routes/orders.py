@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required, current_user
-from models import Order, OrderItem, Customer, Product, StockMovement, db
+from models import Order, OrderItem, Customer, Product, StockMovement, Company, db
 from services.whatsapp_service import WhatsAppService
 from services.print_service import PrintService
 from decimal import Decimal
@@ -145,6 +145,13 @@ def new():
 def view(id):
     order = Order.query.get_or_404(id)
     return render_template('orders/view.html', order=order)
+
+@orders_bp.route('/<int:id>/receipt')
+@login_required
+def receipt(id):
+    order = Order.query.get_or_404(id)
+    company = Company.query.first()
+    return render_template('orders/receipt.html', order=order, company=company)
 
 @orders_bp.route('/<int:id>/print')
 @login_required
