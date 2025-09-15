@@ -140,7 +140,7 @@
                                     #{{ order.id }}
                                 </a>
                             </td>
-                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</td>
                             <td>{{ order.customer.name }}</td>
                             <td>
                                 {% if order.payment_method == 'cash' %}Dinheiro

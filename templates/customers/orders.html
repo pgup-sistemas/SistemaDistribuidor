@@ -80,7 +80,7 @@
                                     <strong>#{{ order.id }}</strong>
                                 </a>
                             </td>
-                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</td>
                             <td>R$ {{ "%.2f"|format(order.total) }}</td>
                             <td>
                                 <span class="badge bg-secondary">

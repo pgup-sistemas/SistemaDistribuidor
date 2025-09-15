@@ -93,7 +93,7 @@
                                     <strong>#{{ order.id }}</strong>
                                 </a>
                             </td>
-                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'N/A' }}</td>
                             <td>
                                 <strong>{{ order.customer.name }}</strong>
                                 {% if order.customer.phone %}
