@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from flask_login import login_required, current_user
+from flask_wtf.csrf import CSRFProtect
 from models import Order, db
 from services.mercadopago_service import MercadoPagoService
 import logging
+
+# Get CSRF instance to allow exemptions
+csrf = CSRFProtect()
 
 payments_bp = Blueprint('payments', __name__)
 
@@ -94,6 +98,7 @@ def payment_pending():
     return redirect(url_for('orders.index'))
 
 @payments_bp.route('/webhook', methods=['POST'])
+@csrf.exempt
 def webhook():
     """Webhook para receber notificações do MercadoPago"""
     try:

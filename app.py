@@ -31,13 +31,21 @@ def create_app():
     app = Flask(__name__)
 
     # Configuration
-    app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+    app.secret_key = os.environ.get("SESSION_SECRET")
+    if not app.secret_key:
+        raise ValueError("SESSION_SECRET environment variable is required and cannot be empty")
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
         "pool_pre_ping": True,
     }
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Secure session cookie configuration
+    app.config["SESSION_COOKIE_SECURE"] = True  # Only send over HTTPS
+    app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent XSS access to session cookie
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
+    app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 hour session timeout
 
     # Middleware
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
@@ -121,21 +129,6 @@ def create_app():
         import models
         db.create_all()
 
-        # Create default admin user if not exists
-        from models import User
-        from werkzeug.security import generate_password_hash
-
-        admin = User.query.filter_by(email='admin@distribuidor.com').first()
-        if not admin:
-            admin_user = User()
-            admin_user.name = 'Administrador'
-            admin_user.email = 'admin@distribuidor.com'
-            admin_user.password_hash = generate_password_hash('admin123')
-            admin_user.role = 'admin'
-            admin_user.active = True
-            db.session.add(admin_user)
-            db.session.commit()
-            logging.info("Default admin user created: admin@distribuidor.com / admin123")
 
     return app
 

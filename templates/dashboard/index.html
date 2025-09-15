@@ -246,7 +246,7 @@
                             <div>
                                 <strong>#{{ order.id }}</strong> - {{ order.customer.name }}
                                 <br>
-                                <small class="text-muted">{{ order.created_at.strftime('%d/%m/%Y %H:%M') }}</small>
+                                <small class="text-muted">{{ order.created_at.strftime('%d/%m/%Y %H:%M') if order.created_at else 'Data não disponível' }}</small>
                             </div>
                             <div class="text-end">
                                 <div>R$ {{ "%.2f"|format(order.total) }}</div>
