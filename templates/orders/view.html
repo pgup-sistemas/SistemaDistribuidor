@@ -155,6 +155,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST" action="{{ url_for('orders.update_status', id=order.id) }}" data-no-warning="true" onsubmit="return confirmStatusUpdate()">
+                        {{ csrf_token() }}
                         <div class="mb-3">
                             <select class="form-select" name="status" id="statusSelect">
                                 <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pendente</option>
