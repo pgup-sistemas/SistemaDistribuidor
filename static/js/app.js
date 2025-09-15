@@ -12,13 +12,13 @@ window.DistribuidorApp = {
         currency: 'BRL',
         locale: 'pt-BR'
     },
-    
+
     // Utility functions
     utils: {},
-    
+
     // Component modules
     components: {},
-    
+
     // Initialize application
     init: function() {
         this.utils.init();
@@ -34,44 +34,44 @@ DistribuidorApp.utils = {
     init: function() {
         // Initialize utility functions
     },
-    
+
     // Format currency values
     formatCurrency: function(value) {
         if (isNaN(value) || value === null || value === undefined) {
             return 'R$ 0,00';
         }
-        
+
         return new Intl.NumberFormat('pt-BR', {
             style: 'currency',
             currency: 'BRL'
         }).format(value);
     },
-    
+
     // Format numbers
     formatNumber: function(value, decimals = 2) {
         if (isNaN(value) || value === null || value === undefined) {
             return '0';
         }
-        
+
         return new Intl.NumberFormat('pt-BR', {
             minimumFractionDigits: decimals,
             maximumFractionDigits: decimals
         }).format(value);
     },
-    
+
     // Format dates
     formatDate: function(date, format = 'DD/MM/YYYY') {
         if (!date) return '';
-        
+
         const d = new Date(date);
         if (isNaN(d.getTime())) return '';
-        
+
         const day = String(d.getDate()).padStart(2, '0');
         const month = String(d.getMonth() + 1).padStart(2, '0');
         const year = d.getFullYear();
         const hours = String(d.getHours()).padStart(2, '0');
         const minutes = String(d.getMinutes()).padStart(2, '0');
-        
+
         switch (format) {
             case 'DD/MM/YYYY':
                 return `${day}/${month}/${year}`;
@@ -83,20 +83,20 @@ DistribuidorApp.utils = {
                 return `${day}/${month}/${year}`;
         }
     },
-    
+
     // Parse currency input
     parseCurrency: function(value) {
         if (typeof value === 'number') return value;
         if (!value) return 0;
-        
+
         // Remove currency symbols and convert to number
         const cleaned = value.toString()
             .replace(/[^\d,.-]/g, '')
             .replace(',', '.');
-        
+
         return parseFloat(cleaned) || 0;
     },
-    
+
     // Show loading overlay
     showLoading: function() {
         const overlay = document.createElement('div');
@@ -105,7 +105,7 @@ DistribuidorApp.utils = {
         overlay.innerHTML = '<div class="loading-spinner"></div>';
         document.body.appendChild(overlay);
     },
-    
+
     // Hide loading overlay
     hideLoading: function() {
         const overlay = document.getElementById('globalLoadingOverlay');
@@ -113,7 +113,7 @@ DistribuidorApp.utils = {
             overlay.remove();
         }
     },
-    
+
     // Show toast notification
     showToast: function(message, type = 'info', duration = 5000) {
         // Create toast container if it doesn't exist
@@ -130,7 +130,7 @@ DistribuidorApp.utils = {
             `;
             document.body.appendChild(container);
         }
-        
+
         // Create toast element
         const toast = document.createElement('div');
         toast.className = `alert alert-${type} alert-dismissible fade show`;
@@ -139,9 +139,9 @@ DistribuidorApp.utils = {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
-        
+
         container.appendChild(toast);
-        
+
         // Auto-remove after duration
         setTimeout(() => {
             if (toast.parentNode) {
@@ -149,14 +149,14 @@ DistribuidorApp.utils = {
             }
         }, duration);
     },
-    
+
     // Confirm dialog
     confirm: function(message, callback) {
         if (window.confirm(message)) {
             callback();
         }
     },
-    
+
     // Debounce function
     debounce: function(func, wait, immediate) {
         let timeout;
@@ -187,7 +187,7 @@ DistribuidorApp.components = {
         this.initStockAlerts();
         this.initKeyboardShortcuts();
     },
-    
+
     // Form validation enhancements
     initFormValidation: function() {
         // Add custom validation styles
@@ -197,7 +197,7 @@ DistribuidorApp.components = {
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
-                    
+
                     // Focus on first invalid field
                     const firstInvalid = form.querySelector(':invalid');
                     if (firstInvalid) {
@@ -205,7 +205,7 @@ DistribuidorApp.components = {
                         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
-                
+
                 // Don't mark login/logout forms as validated to avoid beforeunload warnings
                 if (!window.location.pathname.includes('/login') && 
                     !window.location.pathname.includes('/logout') &&
@@ -214,7 +214,7 @@ DistribuidorApp.components = {
                 }
             });
         });
-        
+
         // Real-time validation for currency inputs
         const currencyInputs = document.querySelectorAll('input[type="number"][step="0.01"]');
         currencyInputs.forEach(input => {
@@ -226,7 +226,7 @@ DistribuidorApp.components = {
             });
         });
     },
-    
+
     // Enhanced data tables
     initDataTables: function() {
         // Add sorting functionality to tables
@@ -238,7 +238,7 @@ DistribuidorApp.components = {
                 if (header.textContent.trim() && !header.querySelector('.no-sort')) {
                     header.style.cursor = 'pointer';
                     header.title = 'Clique para ordenar';
-                    
+
                     header.addEventListener('click', function() {
                         // Basic client-side sorting implementation
                         // This is a simplified version - in production you might want a more robust solution
@@ -247,7 +247,7 @@ DistribuidorApp.components = {
                 }
             });
         });
-        
+
         // Highlight rows on hover
         const tableRows = document.querySelectorAll('.table tbody tr');
         tableRows.forEach(row => {
@@ -262,7 +262,7 @@ DistribuidorApp.components = {
             });
         });
     },
-    
+
     // Chart enhancements
     initCharts: function() {
         // Global Chart.js defaults
@@ -273,7 +273,7 @@ DistribuidorApp.components = {
             Chart.defaults.backgroundColor = 'rgba(255, 255, 255, 0.1)';
         }
     },
-    
+
     // Search enhancements
     initSearch: function() {
         const searchInputs = document.querySelectorAll('input[type="search"], input[name="search"]');
@@ -294,7 +294,7 @@ DistribuidorApp.components = {
                 input.parentNode.appendChild(icon);
                 input.style.paddingRight = '35px';
             }
-            
+
             // Add real-time search with debounce
             const debouncedSearch = DistribuidorApp.utils.debounce(function() {
                 // Auto-submit search form after typing stops
@@ -306,11 +306,11 @@ DistribuidorApp.components = {
                     }
                 }
             }, 800);
-            
+
             input.addEventListener('input', debouncedSearch);
         });
     },
-    
+
     // Print functionality
     initPrint: function() {
         const printButtons = document.querySelectorAll('[data-print]');
@@ -318,12 +318,12 @@ DistribuidorApp.components = {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
                 const url = this.href || this.getAttribute('data-print');
-                
+
                 if (url) {
                     // Open print window
                     const printWindow = window.open(url + '?auto_print=true', '_blank', 
                         'width=800,height=600,scrollbars=yes,resizable=yes');
-                    
+
                     if (printWindow) {
                         printWindow.focus();
                     } else {
@@ -336,7 +336,7 @@ DistribuidorApp.components = {
             });
         });
     },
-    
+
     // WhatsApp integration
     initWhatsApp: function() {
         const whatsappButtons = document.querySelectorAll('[href*="whatsapp"], .btn-whatsapp');
@@ -346,7 +346,7 @@ DistribuidorApp.components = {
                 const originalText = this.innerHTML;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Abrindo WhatsApp...';
                 this.disabled = true;
-                
+
                 setTimeout(() => {
                     this.innerHTML = originalText;
                     this.disabled = false;
@@ -354,7 +354,7 @@ DistribuidorApp.components = {
             });
         });
     },
-    
+
     // Stock alerts
     initStockAlerts: function() {
         // Check for low stock indicators
@@ -370,7 +370,7 @@ DistribuidorApp.components = {
             }, 1000);
         }
     },
-    
+
     // Keyboard shortcuts
     initKeyboardShortcuts: function() {
         document.addEventListener('keydown', function(e) {
@@ -383,7 +383,7 @@ DistribuidorApp.components = {
                         const newButton = document.querySelector('a[href*="/new"], .btn-primary[href*="/new"]');
                         if (newButton) newButton.click();
                         break;
-                    
+
                     case 's':
                         e.preventDefault();
                         // Find and submit the main form
@@ -392,7 +392,7 @@ DistribuidorApp.components = {
                             mainForm.submit();
                         }
                         break;
-                    
+
                     case '/':
                         e.preventDefault();
                         // Focus on search input
@@ -404,7 +404,7 @@ DistribuidorApp.components = {
                         break;
                 }
             }
-            
+
             // Escape key
             if (e.key === 'Escape') {
                 // Close modals
@@ -415,7 +415,7 @@ DistribuidorApp.components = {
                         bootstrapModal.hide();
                     }
                 }
-                
+
                 // Clear search
                 const searchInput = document.querySelector('input[type="search"]:focus, input[name="search"]:focus');
                 if (searchInput) {
@@ -425,33 +425,33 @@ DistribuidorApp.components = {
             }
         });
     },
-    
+
     // Table sorting helper
     sortTable: function(table, columnIndex) {
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         const header = table.querySelectorAll('th')[columnIndex];
-        
+
         // Determine sort direction
         const isAscending = !header.classList.contains('sort-asc');
-        
+
         // Remove existing sort classes
         table.querySelectorAll('th').forEach(th => {
             th.classList.remove('sort-asc', 'sort-desc');
         });
-        
+
         // Add sort class to current header
         header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
-        
+
         // Sort rows
         rows.sort((a, b) => {
             const aText = a.cells[columnIndex].textContent.trim();
             const bText = b.cells[columnIndex].textContent.trim();
-            
+
             // Try to parse as numbers for numeric sorting
             const aNum = parseFloat(aText.replace(/[^\d.-]/g, ''));
             const bNum = parseFloat(bText.replace(/[^\d.-]/g, ''));
-            
+
             if (!isNaN(aNum) && !isNaN(bNum)) {
                 return isAscending ? aNum - bNum : bNum - aNum;
             } else {
@@ -460,7 +460,7 @@ DistribuidorApp.components = {
                     : bText.localeCompare(aText, 'pt-BR');
             }
         });
-        
+
         // Reorder rows in DOM
         rows.forEach(row => tbody.appendChild(row));
     }
@@ -475,15 +475,15 @@ DistribuidorApp.bindGlobalEvents = function() {
             const submitButton = form.querySelector('button[type="submit"], input[type="submit"]');
             if (submitButton && !form.hasAttribute('data-no-loading')) {
                 const originalText = submitButton.innerHTML || submitButton.value;
-                
+
                 if (submitButton.tagName === 'BUTTON') {
                     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
                 } else {
                     submitButton.value = 'Processando...';
                 }
-                
+
                 submitButton.disabled = true;
-                
+
                 // Re-enable after 5 seconds as fallback
                 setTimeout(() => {
                     if (submitButton.tagName === 'BUTTON') {
@@ -496,7 +496,7 @@ DistribuidorApp.bindGlobalEvents = function() {
             }
         }
     });
-    
+
     // Handle file upload preview
     document.addEventListener('change', function(e) {
         if (e.target.type === 'file' && e.target.accept && e.target.accept.includes('image')) {
@@ -517,7 +517,7 @@ DistribuidorApp.bindGlobalEvents = function() {
             }
         }
     });
-    
+
     // Auto-focus on modal open
     document.addEventListener('shown.bs.modal', function(e) {
         const modal = e.target;
@@ -526,13 +526,13 @@ DistribuidorApp.bindGlobalEvents = function() {
             setTimeout(() => firstInput.focus(), 100);
         }
     });
-    
+
     // Confirm delete actions
     document.addEventListener('click', function(e) {
         if (e.target.matches('[data-confirm]') || e.target.closest('[data-confirm]')) {
             const element = e.target.matches('[data-confirm]') ? e.target : e.target.closest('[data-confirm]');
             const message = element.getAttribute('data-confirm') || 'Tem certeza que deseja continuar?';
-            
+
             if (!confirm(message)) {
                 e.preventDefault();
                 return false;
@@ -565,7 +565,7 @@ DistribuidorApp.initPopovers = function() {
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     DistribuidorApp.init();
-    
+
     // Show welcome message for new sessions
     const isNewSession = !sessionStorage.getItem('app_initialized');
     if (isNewSession) {
@@ -578,6 +578,102 @@ document.addEventListener('DOMContentLoaded', function() {
             );
         }, 1000);
     }
+
+    // Sidebar functionality
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const mainContent = document.getElementById('mainContent');
+    let sidebarOverlay;
+
+    // Create overlay for mobile
+    function createOverlay() {
+        if (!sidebarOverlay) {
+            sidebarOverlay = document.createElement('div');
+            sidebarOverlay.className = 'sidebar-overlay';
+            document.body.appendChild(sidebarOverlay);
+
+            sidebarOverlay.addEventListener('click', closeSidebar);
+        }
+    }
+
+    // Toggle sidebar
+    function toggleSidebar() {
+        if (window.innerWidth <= 768) {
+            createOverlay();
+        }
+
+        sidebar.classList.toggle('show');
+
+        if (window.innerWidth > 768) {
+            mainContent.classList.toggle('sidebar-open');
+            localStorage.setItem('sidebarOpen', sidebar.classList.contains('show'));
+        } else {
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.toggle('show');
+            }
+        }
+    }
+
+    // Close sidebar
+    function closeSidebar() {
+        sidebar.classList.remove('show');
+        if (window.innerWidth > 768) {
+            mainContent.classList.remove('sidebar-open');
+            localStorage.setItem('sidebarOpen', 'false');
+        } else if (sidebarOverlay) {
+            sidebarOverlay.classList.remove('show');
+        }
+    }
+
+    // Event listeners
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', toggleSidebar);
+    }
+
+    // Restore sidebar state on desktop
+    if (window.innerWidth > 768) {
+        const sidebarOpen = localStorage.getItem('sidebarOpen');
+        if (sidebarOpen === 'true') {
+            sidebar.classList.add('show');
+            mainContent.classList.add('sidebar-open');
+        }
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            if (sidebarOverlay) {
+                sidebarOverlay.classList.remove('show');
+            }
+            const sidebarOpen = localStorage.getItem('sidebarOpen');
+            if (sidebarOpen === 'true') {
+                sidebar.classList.add('show');
+                mainContent.classList.add('sidebar-open');
+            }
+        } else {
+            mainContent.classList.remove('sidebar-open');
+        }
+    });
+
+    // Highlight active menu item
+    const currentPath = window.location.pathname;
+    const sidebarItems = document.querySelectorAll('.sidebar-item');
+
+    sidebarItems.forEach(item => {
+        const href = item.getAttribute('href');
+        if (href && (currentPath === href || (href !== '/' && currentPath.startsWith(href)))) {
+            item.classList.add('active');
+        }
+    });
+
+    // Close sidebar on mobile when clicking a link
+    sidebarItems.forEach(item => {
+        item.addEventListener('click', function() {
+            if (window.innerWidth <= 768) {
+                setTimeout(closeSidebar, 100);
+            }
+        });
+    });
 });
 
 // Handle page unload
@@ -592,33 +688,33 @@ window.addEventListener('beforeunload', function(e) {
             if (window.location.pathname.includes('/login') || window.location.pathname.includes('/logout')) {
                 return;
             }
-            
+
             // Skip forms with data-no-warning attribute
             if (form.hasAttribute('data-no-warning')) {
                 return;
             }
-            
+
             // Skip forms that are login/logout forms by action
             if (form.action && (form.action.includes('/login') || form.action.includes('/logout'))) {
                 return;
             }
-            
+
             // Skip forms that are status update forms
             if (form.action && form.action.includes('/status')) {
                 return;
             }
-            
+
             // Skip forms that are simple action forms (like status updates)
             if (form.method === 'POST' && form.action && form.action.includes('/status')) {
                 return;
             }
-            
+
             const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="checkbox"]), textarea, select');
             if (inputs.length > 1) { // More than just one field (usually the status select)
                 hasInputs = true;
             }
         });
-        
+
         if (hasInputs) {
             const message = 'Você tem alterações não salvas. Deseja realmente sair?';
             e.returnValue = message;
