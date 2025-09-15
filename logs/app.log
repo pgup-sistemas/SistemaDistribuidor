@@ -252,3 +252,4 @@ Traceback (most recent call last):
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 jinja2.exceptions.UndefinedError: 'None' has no attribute 'strftime'
 2025-09-15 02:32:40,182 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
+2025-09-15 02:34:55,365 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
