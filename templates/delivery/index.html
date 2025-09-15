@@ -1,0 +1,127 @@
+
+{% extends "base.html" %}
+
+{% block title %}Entregas - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-truck"></i> Entregas</h1>
+    </div>
+    
+    <!-- Filters -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <form method="GET">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todos os status</option>
+                    <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>Pendente</option>
+                    <option value="in_transit" {% if selected_status == 'in_transit' %}selected{% endif %}>Em trânsito</option>
+                    <option value="delivered" {% if selected_status == 'delivered' %}selected{% endif %}>Entregue</option>
+                    <option value="failed" {% if selected_status == 'failed' %}selected{% endif %}>Falhou</option>
+                </select>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Deliveries Table -->
+    <div class="card">
+        <div class="card-body">
+            {% if deliveries.items %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Entregador</th>
+                            <th>Status</th>
+                            <th>Criado em</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for delivery in deliveries.items %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('orders.view', id=delivery.order.id) }}">
+                                    <strong>#{{ delivery.order.id }}</strong>
+                                </a>
+                            </td>
+                            <td>{{ delivery.order.customer.name }}</td>
+                            <td>{{ delivery.delivery_user.name }}</td>
+                            <td>
+                                <span class="badge {% if delivery.status == 'pending' %}bg-warning{% elif delivery.status == 'in_transit' %}bg-primary{% elif delivery.status == 'delivered' %}bg-success{% elif delivery.status == 'failed' %}bg-danger{% endif %}">
+                                    {% if delivery.status == 'pending' %}Pendente
+                                    {% elif delivery.status == 'in_transit' %}Em trânsito
+                                    {% elif delivery.status == 'delivered' %}Entregue
+                                    {% elif delivery.status == 'failed' %}Falhou
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ delivery.created_at.strftime('%d/%m/%Y %H:%M') if delivery.created_at else 'N/A' }}</td>
+                            <td>
+                                <a href="{{ url_for('delivery.view', delivery_id=delivery.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Ver
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if deliveries.pages > 1 %}
+            <nav aria-label="Navegação da página">
+                <ul class="pagination justify-content-center">
+                    {% if deliveries.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('delivery.index', page=deliveries.prev_num, status=selected_status) }}">Anterior</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for page_num in deliveries.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != deliveries.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('delivery.index', page=page_num, status=selected_status) }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if deliveries.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('delivery.index', page=deliveries.next_num, status=selected_status) }}">Próxima</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+            
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5>Nenhuma entrega encontrada</h5>
+                <p class="text-muted">
+                    {% if selected_status %}
+                    Nenhuma entrega encontrada com o status selecionado.
+                    {% else %}
+                    Ainda não há entregas registradas.
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

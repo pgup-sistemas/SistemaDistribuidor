@@ -1,0 +1,147 @@
+
+{% extends "base.html" %}
+
+{% block title %}Entrega #{{ delivery.id }} - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-truck"></i> Entrega #{{ delivery.id }}</h1>
+        <a href="{{ url_for('delivery.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar às Entregas
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Delivery Info -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informações da Entrega</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Pedido:</strong> 
+                        <a href="{{ url_for('orders.view', id=delivery.order.id) }}">#{{ delivery.order.id }}</a>
+                    </p>
+                    <p><strong>Entregador:</strong> {{ delivery.delivery_user.name }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if delivery.status == 'pending' %}bg-warning{% elif delivery.status == 'in_transit' %}bg-primary{% elif delivery.status == 'delivered' %}bg-success{% elif delivery.status == 'failed' %}bg-danger{% endif %}">
+                            {% if delivery.status == 'pending' %}Pendente
+                            {% elif delivery.status == 'in_transit' %}Em trânsito
+                            {% elif delivery.status == 'delivered' %}Entregue
+                            {% elif delivery.status == 'failed' %}Falhou
+                            {% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Criado em:</strong> {{ delivery.created_at.strftime('%d/%m/%Y %H:%M') if delivery.created_at else 'N/A' }}</p>
+                    {% if delivery.delivered_at %}
+                    <p><strong>Entregue em:</strong> {{ delivery.delivered_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                    {% endif %}
+                    {% if delivery.notes %}
+                    <p><strong>Observações:</strong> {{ delivery.notes }}</p>
+                    {% endif %}
+                    {% if delivery.delivery_proof %}
+                    <p><strong>Comprovante:</strong> {{ delivery.delivery_proof }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Info -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-user"></i> Informações do Cliente</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nome:</strong> {{ delivery.order.customer.name }}</p>
+                    <p><strong>Telefone:</strong> {{ delivery.order.customer.phone }}</p>
+                    <p><strong>Endereço:</strong> {{ delivery.order.customer.address }}</p>
+                    <p><strong>Total do Pedido:</strong> R$ {{ "%.2f"|format(delivery.order.total) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Form -->
+    {% if current_user.role in ['admin', 'manager'] or delivery.delivery_user_id == current_user.id %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-edit"></i> Atualizar Status</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('delivery.update_status', delivery_id=delivery.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" name="status" id="status">
+                                <option value="pending" {% if delivery.status == 'pending' %}selected{% endif %}>Pendente</option>
+                                <option value="in_transit" {% if delivery.status == 'in_transit' %}selected{% endif %}>Em trânsito</option>
+                                <option value="delivered" {% if delivery.status == 'delivered' %}selected{% endif %}>Entregue</option>
+                                <option value="failed" {% if delivery.status == 'failed' %}selected{% endif %}>Falhou</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="delivery_proof" class="form-label">Comprovante</label>
+                            <input type="text" class="form-control" name="delivery_proof" id="delivery_proof" value="{{ delivery.delivery_proof or '' }}" placeholder="Comprovante de entrega">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Observações</label>
+                            <textarea class="form-control" name="notes" id="notes" rows="2">{{ delivery.notes or '' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Atualizar Status
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Order Items -->
+    <div class="card">
+        <div class="card-header">
+            <h5><i class="fas fa-list"></i> Itens do Pedido</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Quantidade</th>
+                            <th>Preço Unitário</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in delivery.order.items %}
+                        <tr>
+                            <td>{{ item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>R$ {{ "%.2f"|format(item.unit_price) }}</td>
+                            <td>R$ {{ "%.2f"|format(item.subtotal) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active">
+                            <th colspan="3">Total</th>
+                            <th>R$ {{ "%.2f"|format(delivery.order.total) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
