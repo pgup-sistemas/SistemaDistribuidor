@@ -7,12 +7,21 @@ from config import Config
 class MercadoPagoService:
     def __init__(self):
         """Inicializa o serviço do MercadoPago"""
+        if not Config.MERCADOPAGO_ACCESS_TOKEN:
+            raise ValueError("MERCADOPAGO_ACCESS_TOKEN não configurado")
+        if not Config.MERCADOPAGO_PUBLIC_KEY:
+            raise ValueError("MERCADOPAGO_PUBLIC_KEY não configurado")
+            
         self.sdk = mercadopago.SDK(Config.MERCADOPAGO_ACCESS_TOKEN)
         self.public_key = Config.MERCADOPAGO_PUBLIC_KEY
         self.sandbox = Config.MERCADOPAGO_SANDBOX
         self.webhook_secret = Config.MERCADOPAGO_WEBHOOK_SECRET
         
         logging.info(f"MercadoPago Service initialized - Sandbox: {self.sandbox}")
+        if self.sandbox:
+            logging.warning("ATENÇÃO: Sistema em modo SANDBOX (teste)")
+        else:
+            logging.info("Sistema em modo PRODUÇÃO")
     
     def create_preference(self, order):
         """

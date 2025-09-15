@@ -1,0 +1,97 @@
+
+{% extends "base.html" %}
+
+{% block title %}Informações de Pagamento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Informações do Sistema de Pagamento</h5>
+                </div>
+                <div class="card-body">
+                    {% if config.MERCADOPAGO_SANDBOX %}
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-flask"></i> Modo TESTE/SANDBOX Ativo</h6>
+                        <p>O sistema está configurado para <strong>testes</strong>. Nenhum pagamento real será processado.</p>
+                        <ul>
+                            <li>Use apenas cartões de teste do MercadoPago</li>
+                            <li>Não use cartões reais</li>
+                            <li>Transações são simuladas</li>
+                        </ul>
+                        
+                        <h6 class="mt-3">Cartões de Teste:</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Cartão</th>
+                                        <th>CVV</th>
+                                        <th>Resultado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>4509 9535 6623 3704</td>
+                                        <td>123</td>
+                                        <td>Aprovado</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5031 7557 3453 0604</td>
+                                        <td>123</td>
+                                        <td>Aprovado</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4774 0614 7401 7001</td>
+                                        <td>123</td>
+                                        <td>Rejeitado</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-shield-alt"></i> Modo PRODUÇÃO Ativo</h6>
+                        <p>O sistema está configurado para <strong>pagamentos reais</strong>.</p>
+                        <ul>
+                            <li>Use cartões reais</li>
+                            <li>Transações serão cobradas</li>
+                            <li>Ambiente seguro e certificado</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Métodos Aceitos:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-credit-card text-primary"></i> Cartões de Crédito</li>
+                                <li><i class="fas fa-credit-card text-info"></i> Cartões de Débito</li>
+                                <li><i class="fas fa-qrcode text-success"></i> PIX</li>
+                                <li><i class="fas fa-barcode text-warning"></i> Boleto Bancário</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Segurança:</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-lock text-success"></i> Conexão SSL</li>
+                                <li><i class="fas fa-shield-alt text-success"></i> Certificação PCI</li>
+                                <li><i class="fas fa-eye-slash text-success"></i> Dados Criptografados</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Voltar aos Pedidos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

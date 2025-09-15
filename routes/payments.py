@@ -175,6 +175,13 @@ def payment_config():
         'sandbox': Config.MERCADOPAGO_SANDBOX
     })
 
+@payments_bp.route('/info')
+@login_required
+def payment_info():
+    """Mostra informações sobre o sistema de pagamento"""
+    from config import Config
+    return render_template('payments/info.html', config=Config)
+
 @payments_bp.route('/test-payment/<int:order_id>')
 @login_required
 def test_payment(order_id):
