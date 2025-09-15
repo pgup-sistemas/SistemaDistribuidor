@@ -295,3 +295,4 @@ Traceback (most recent call last):
   File "/home/runner/workspace/.pythonlibs/lib/python3.11/site-packages/flask/templating.py", line 99, in _get_source_fast
     raise TemplateNotFound(template)
 jinja2.exceptions.TemplateNotFound: delivery/assign.html
+2025-09-15 02:41:13,725 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
