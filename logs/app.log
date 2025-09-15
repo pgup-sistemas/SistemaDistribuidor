@@ -251,3 +251,4 @@ Traceback (most recent call last):
     if hasattr(obj, "jinja_pass_arg"):
        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 jinja2.exceptions.UndefinedError: 'None' has no attribute 'strftime'
+2025-09-15 02:32:40,182 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
