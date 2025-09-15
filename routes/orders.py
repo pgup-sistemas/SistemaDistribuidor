@@ -225,8 +225,8 @@ def send_whatsapp_confirmation(id):
     whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
     
     if whatsapp_result['success']:
-        flash(f'Link do WhatsApp gerado! Clique aqui para enviar: {whatsapp_result["whatsapp_url"]}', 'info')
+        # Redirecionar diretamente para o WhatsApp
+        return redirect(whatsapp_result['whatsapp_url'])
     else:
         flash(f'Erro ao gerar link do WhatsApp: {whatsapp_result["error"]}', 'error')
-    
-    return redirect(url_for('orders.view', id=id))
+        return redirect(url_for('orders.view', id=id))
