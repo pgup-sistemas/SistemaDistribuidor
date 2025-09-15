@@ -14,7 +14,7 @@
                     </h4>
                 </div>
                 <div class="card-body">
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
@@ -35,6 +35,19 @@
                         <div class="mb-3">
                             <label for="description" class="form-label">Descrição</label>
                             <textarea class="form-control" id="description" name="description" rows="3">{{ product.description if product else '' }}</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Imagem do Produto</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div class="form-text">Formatos aceitos: PNG, JPG, JPEG, GIF, WEBP</div>
+                            {% if product and product.image_url %}
+                            <div class="mt-2">
+                                <img src="/uploads/{{ product.image_url }}" alt="{{ product.name }}" 
+                                     class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                                <div class="form-text">Imagem atual</div>
+                            </div>
+                            {% endif %}
                         </div>
                         
                         <div class="row">

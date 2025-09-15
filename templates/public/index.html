@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        
+        .feature-card {
+            transition: transform 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .btn-whatsapp {
+            background-color: #25D366;
+            border-color: #25D366;
+            color: white;
+        }
+        
+        .btn-whatsapp:hover {
+            background-color: #128C7E;
+            border-color: #128C7E;
+            color: white;
+        }
+        
+        .footer {
+            background-color: #343a40;
+            color: white;
+            padding: 40px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="fas fa-store"></i> 
+                        {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}
+                    </h1>
+                    <p class="lead mb-4">
+                        Faça seus pedidos de forma rápida e prática! 
+                        Receba confirmação instantânea via WhatsApp.
+                    </p>
+                    <div class="d-flex gap-3">
+                        <a href="{{ url_for('public.order_form') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-shopping-cart"></i> Fazer Pedido
+                        </a>
+                        <a href="{{ url_for('public.menu') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-list"></i> Ver Cardápio
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-6 text-center">
+                    <i class="fas fa-mobile-alt fa-10x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row text-center mb-5">
+                <div class="col-12">
+                    <h2 class="display-5 fw-bold">Como Funciona</h2>
+                    <p class="lead text-muted">Simples, rápido e prático!</p>
+                </div>
+            </div>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                            <h5 class="card-title">1. Faça Seu Pedido</h5>
+                            <p class="card-text">
+                                Escolha os produtos, preencha seus dados e confirme o pedido.
+                                Tudo online, sem complicação!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="fab fa-whatsapp fa-3x text-success mb-3"></i>
+                            <h5 class="card-title">2. Receba Confirmação</h5>
+                            <p class="card-text">
+                                Receba a confirmação do seu pedido instantaneamente 
+                                via WhatsApp com todos os detalhes.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card feature-card h-100 text-center p-4">
+                        <div class="card-body">
+                            <i class="fas fa-truck fa-3x text-warning mb-3"></i>
+                            <h5 class="card-title">3. Acompanhe Entrega</h5>
+                            <p class="card-text">
+                                Receba atualizações do status do seu pedido 
+                                diretamente no seu WhatsApp.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-12">
+                    <h2 class="display-5 fw-bold mb-4">Pronto para Fazer Seu Pedido?</h2>
+                    <p class="lead mb-4">
+                        Clique no botão abaixo e comece agora mesmo!
+                    </p>
+                    <a href="{{ url_for('public.order_form') }}" class="btn btn-whatsapp btn-lg">
+                        <i class="fab fa-whatsapp"></i> Fazer Pedido Agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <h3 class="fw-bold mb-4">Entre em Contato</h3>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <i class="fas fa-phone text-primary me-2"></i>
+                            <strong>Telefone:</strong> {{ config.COMPANY_PHONE or '(11) 99999-9999' }}
+                        </div>
+                        <div class="col-12">
+                            <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                            <strong>Endereço:</strong> {{ config.COMPANY_ADDRESS or 'Consulte conosco' }}
+                        </div>
+                        <div class="col-12">
+                            <i class="fas fa-clock text-primary me-2"></i>
+                            <strong>Horário:</strong> Segunda a Sexta, 8h às 18h
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <h3 class="fw-bold mb-4">Redes Sociais</h3>
+                    <div class="d-flex gap-3">
+                        <a href="#" class="btn btn-outline-primary">
+                            <i class="fab fa-facebook"></i> Facebook
+                        </a>
+                        <a href="#" class="btn btn-outline-info">
+                            <i class="fab fa-instagram"></i> Instagram
+                        </a>
+                        <a href="#" class="btn btn-whatsapp">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>{{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</h5>
+                    <p class="mb-0">Sistema de pedidos online com confirmação via WhatsApp.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">
+                        &copy; {{ current_year() }} {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}. 
+                        Todos os direitos reservados.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

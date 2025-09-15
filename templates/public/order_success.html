@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido Confirmado - {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .success-icon {
+            font-size: 4rem;
+            color: #28a745;
+        }
+        
+        .order-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-whatsapp {
+            background-color: #25D366;
+            border-color: #25D366;
+            color: white;
+        }
+        
+        .btn-whatsapp:hover {
+            background-color: #128C7E;
+            border-color: #128C7E;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('public.index') }}">
+                <i class="fas fa-store"></i> {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}
+            </a>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Sucesso -->
+                <div class="text-center mb-5">
+                    <i class="fas fa-check-circle success-icon"></i>
+                    <h1 class="display-4 fw-bold text-success mt-3">Pedido Confirmado!</h1>
+                    <p class="lead text-muted">
+                        Seu pedido foi recebido com sucesso. 
+                        Você receberá a confirmação via WhatsApp em instantes.
+                    </p>
+                </div>
+                
+                <!-- Detalhes do Pedido -->
+                <div class="card order-card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-receipt"></i> Detalhes do Pedido #{{ order.id }}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Cliente</h6>
+                                <p class="mb-2">{{ order.customer.name }}</p>
+                                <p class="mb-2">
+                                    <i class="fas fa-phone text-primary"></i> {{ order.customer.phone }}
+                                </p>
+                                {% if order.customer.email %}
+                                <p class="mb-2">
+                                    <i class="fas fa-envelope text-primary"></i> {{ order.customer.email }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold">Pedido</h6>
+                                <p class="mb-2">
+                                    <i class="fas fa-calendar text-primary"></i> 
+                                    {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-credit-card text-primary"></i> 
+                                    {% if order.payment_method == 'cash' %}💵 Dinheiro
+                                    {% elif order.payment_method == 'card' %}💳 Cartão
+                                    {% elif order.payment_method == 'pix' %}📱 PIX
+                                    {% elif order.payment_method == 'bank_slip' %}📄 Boleto
+                                    {% elif order.payment_method == 'mercadopago' %}💳 MercadoPago
+                                    {% else %}{{ order.payment_method }}{% endif %}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-info-circle text-primary"></i> 
+                                    <span class="badge bg-warning">{{ order.status.upper() }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if order.customer.address %}
+                        <hr>
+                        <h6 class="fw-bold">Endereço de Entrega</h6>
+                        <p class="mb-0">
+                            {{ order.customer.address }}, {{ order.customer.neighborhood }}<br>
+                            {{ order.customer.city }}/{{ order.customer.state }} - {{ order.customer.cep }}
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Itens do Pedido -->
+                <div class="card order-card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shopping-bag"></i> Itens do Pedido
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-borderless">
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th class="text-center">Qtd</th>
+                                        <th class="text-end">Preço Unit.</th>
+                                        <th class="text-end">Desconto</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.order_items %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td class="text-center">{{ item.quantity }}</td>
+                                        <td class="text-end">R$ {{ "%.2f"|format(item.unit_price) }}</td>
+                                        <td class="text-end">R$ {{ "%.2f"|format(item.discount) }}</td>
+                                        <td class="text-end fw-bold">R$ {{ "%.2f"|format((item.unit_price * item.quantity) - item.discount) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-top">
+                                        <th colspan="4" class="text-end">Total do Pedido:</th>
+                                        <th class="text-end text-primary">R$ {{ "%.2f"|format(order.total) }}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        {% if order.notes %}
+                        <div class="mt-3">
+                            <h6 class="fw-bold">Observações:</h6>
+                            <p class="text-muted">{{ order.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Ações -->
+                <div class="text-center mb-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Importante:</strong> Você receberá a confirmação do pedido via WhatsApp em instantes. 
+                        Guarde este número do pedido para acompanhar o status.
+                    </div>
+                    
+                    <div class="d-flex gap-3 justify-content-center flex-wrap">
+                        <a href="{{ url_for('public.order_status', token=order.order_token) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-search"></i> Acompanhar Pedido
+                        </a>
+                        <a href="{{ url_for('public.order_form') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Fazer Novo Pedido
+                        </a>
+                        <a href="{{ url_for('public.index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-home"></i> Voltar ao Início
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Informações de Contato -->
+                <div class="card order-card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-headset"></i> Precisa de Ajuda?
+                        </h5>
+                        <p class="card-text">
+                            Entre em contato conosco para qualquer dúvida sobre seu pedido.
+                        </p>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <i class="fas fa-phone text-primary"></i>
+                                <strong>Telefone:</strong><br>
+                                {{ config.COMPANY_PHONE or '(11) 99999-9999' }}
+                            </div>
+                            <div class="col-md-6">
+                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                <strong>Endereço:</strong><br>
+                                {{ config.COMPANY_ADDRESS or 'Consulte conosco' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -58,6 +58,7 @@
                 <table class="table table-hover">
                     <thead>
                         <tr>
+                            <th>Imagem</th>
                             <th>SKU</th>
                             <th>Nome</th>
                             <th>Categoria</th>
@@ -70,6 +71,17 @@
                     <tbody>
                         {% for product in products.items %}
                         <tr>
+                            <td>
+                                {% if product.image_url %}
+                                    <img src="/uploads/{{ product.image_url }}" alt="{{ product.name }}" 
+                                         class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px; border-radius: 4px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
                             <td><code>{{ product.sku }}</code></td>
                             <td>
                                 <strong>{{ product.name }}</strong>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cardápio - {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        .product-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('public.index') }}">
+                <i class="fas fa-store"></i> {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('public.index') }}">
+                    <i class="fas fa-home"></i> Início
+                </a>
+                <a class="nav-link" href="{{ url_for('public.order_form') }}">
+                    <i class="fas fa-shopping-cart"></i> Fazer Pedido
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+        <!-- Cabeçalho -->
+        <div class="text-center mb-5">
+            <h1 class="display-4 fw-bold">
+                <i class="fas fa-list"></i> Nosso Cardápio
+            </h1>
+            <p class="lead text-muted">
+                Escolha os produtos que mais gosta e faça seu pedido!
+            </p>
+        </div>
+        
+        <!-- Filtros -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <input type="text" id="searchProducts" class="form-control" placeholder="Buscar produtos...">
+            </div>
+            <div class="col-md-6">
+                <select id="categoryFilter" class="form-select">
+                    <option value="">Todas as categorias</option>
+                    <!-- Categorias serão carregadas via JavaScript -->
+                </select>
+            </div>
+        </div>
+        
+        <!-- Lista de Produtos -->
+        <div id="productsContainer">
+            <!-- Produtos serão carregados via JavaScript -->
+        </div>
+        
+        <!-- CTA -->
+        <div class="text-center mt-5">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <i class="fas fa-shopping-cart"></i> Pronto para Fazer Seu Pedido?
+                    </h3>
+                    <p class="card-text">
+                        Clique no botão abaixo e comece a montar seu pedido!
+                    </p>
+                    <a href="{{ url_for('public.order_form') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-shopping-cart"></i> Fazer Pedido Agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let products = [];
+        let categories = [];
+        
+        // Carregar produtos
+        async function loadProducts() {
+            try {
+                const response = await fetch('/public/api/products');
+                products = await response.json();
+                
+                // Extrair categorias únicas
+                categories = [...new Set(products.map(p => p.category_name).filter(Boolean))];
+                
+                renderProducts();
+                renderCategoryFilter();
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+                document.getElementById('productsContainer').innerHTML = 
+                    '<div class="alert alert-danger">Erro ao carregar produtos. Tente novamente.</div>';
+            }
+        }
+        
+        // Renderizar filtro de categorias
+        function renderCategoryFilter() {
+            const select = document.getElementById('categoryFilter');
+            select.innerHTML = '<option value="">Todas as categorias</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                select.appendChild(option);
+            });
+        }
+        
+        // Renderizar produtos
+        function renderProducts() {
+            const container = document.getElementById('productsContainer');
+            const searchTerm = document.getElementById('searchProducts').value.toLowerCase();
+            const selectedCategory = document.getElementById('categoryFilter').value;
+            
+            // Filtrar produtos
+            let filteredProducts = products.filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm) ||
+                                    (product.description && product.description.toLowerCase().includes(searchTerm));
+                const matchesCategory = !selectedCategory || product.category_name === selectedCategory;
+                return matchesSearch && matchesCategory;
+            });
+            
+            if (filteredProducts.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">Nenhum produto encontrado.</div>';
+                return;
+            }
+            
+            // Agrupar por categoria
+            const groupedProducts = {};
+            filteredProducts.forEach(product => {
+                const category = product.category_name || 'Outros';
+                if (!groupedProducts[category]) {
+                    groupedProducts[category] = [];
+                }
+                groupedProducts[category].push(product);
+            });
+            
+            // Renderizar por categoria
+            let html = '';
+            Object.keys(groupedProducts).forEach(category => {
+                html += `
+                    <div class="category-header">
+                        <h2 class="mb-0">
+                            <i class="fas fa-tags"></i> ${category}
+                        </h2>
+                    </div>
+                    <div class="row g-4 mb-5">
+                `;
+                
+                groupedProducts[category].forEach(product => {
+                    html += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card product-card h-100">
+                                ${product.image_url ? `
+                                    <img src="${product.image_url}" class="card-img-top" alt="${product.name}" 
+                                         style="height: 200px; object-fit: cover;">
+                                ` : `
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="fas fa-image fa-3x text-muted"></i>
+                                    </div>
+                                `}
+                                <div class="card-body">
+                                    <h5 class="card-title">${product.name}</h5>
+                                    <p class="card-text text-muted">${product.description || ''}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="h5 text-primary mb-0">R$ ${product.price.toFixed(2)}</span>
+                                        <small class="text-muted">
+                                            <i class="fas fa-box"></i> ${product.stock_quantity} disponível(is)
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Event listeners
+        document.getElementById('searchProducts').addEventListener('input', renderProducts);
+        document.getElementById('categoryFilter').addEventListener('change', renderProducts);
+        
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProducts();
+        });
+    </script>
+</body>
+</html>

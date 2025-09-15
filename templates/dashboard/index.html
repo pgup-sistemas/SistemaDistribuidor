@@ -180,6 +180,58 @@
         </div>
     </div>
     
+    <!-- Public Pages Access -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-globe"></i> Acesso às Páginas Públicas</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">Acesse as páginas que seus clientes veem para fazer pedidos online:</p>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-home fa-2x text-success"></i>
+                                </div>
+                                <h6>Página Inicial</h6>
+                                <p class="small text-muted">Landing page da empresa</p>
+                                <a href="{{ url_for('public.index') }}" class="btn btn-outline-success btn-sm" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Ver Página
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-list fa-2x text-info"></i>
+                                </div>
+                                <h6>Cardápio</h6>
+                                <p class="small text-muted">Lista de produtos disponíveis</p>
+                                <a href="{{ url_for('public.menu') }}" class="btn btn-outline-info btn-sm" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Ver Cardápio
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <div class="mb-2">
+                                    <i class="fas fa-shopping-cart fa-2x text-primary"></i>
+                                </div>
+                                <h6>Fazer Pedido</h6>
+                                <p class="small text-muted">Formulário de pedidos</p>
+                                <a href="{{ url_for('public.order_form') }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Fazer Pedido
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="row mt-4">
         <!-- Recent Orders -->
         <div class="col-md-6">

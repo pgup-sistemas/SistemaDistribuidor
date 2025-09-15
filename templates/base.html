@@ -14,6 +14,9 @@
     <!-- Custom CSS -->
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     
+    <!-- CSRF Token -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -90,6 +93,26 @@
                         </ul>
                     </li>
                     {% endif %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-globe"></i> Páginas Públicas
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('public.index') }}" target="_blank">
+                                <i class="fas fa-home"></i> Página Inicial
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('public.menu') }}" target="_blank">
+                                <i class="fas fa-list"></i> Cardápio
+                            </a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('public.order_form') }}" target="_blank">
+                                <i class="fas fa-shopping-cart"></i> Fazer Pedido
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><span class="dropdown-item-text text-muted">
+                                <small>Links abrem em nova aba</small>
+                            </span></li>
+                        </ul>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav">

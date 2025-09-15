@@ -205,7 +205,13 @@ DistribuidorApp.components = {
                         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }
-                form.classList.add('was-validated');
+                
+                // Don't mark login/logout forms as validated to avoid beforeunload warnings
+                if (!window.location.pathname.includes('/login') && 
+                    !window.location.pathname.includes('/logout') &&
+                    !form.hasAttribute('data-no-warning')) {
+                    form.classList.add('was-validated');
+                }
             });
         });
         
@@ -576,13 +582,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Handle page unload
 window.addEventListener('beforeunload', function(e) {
-    // Check for unsaved forms, but exclude simple action forms (like status updates)
-    const forms = document.querySelectorAll('form.was-validated:not([data-no-warning]):not([method="POST"][action*="/status"])');
+    // Check for unsaved forms, but exclude forms that shouldn't trigger warnings
+    const forms = document.querySelectorAll('form.was-validated');
     if (forms.length > 0) {
         // Only warn if form has actual input fields that could contain unsaved data
         let hasInputs = false;
         forms.forEach(form => {
-            const inputs = form.querySelectorAll('input:not([type="hidden"]), textarea, select');
+            // Skip login/logout forms by URL path
+            if (window.location.pathname.includes('/login') || window.location.pathname.includes('/logout')) {
+                return;
+            }
+            
+            // Skip forms with data-no-warning attribute
+            if (form.hasAttribute('data-no-warning')) {
+                return;
+            }
+            
+            // Skip forms that are login/logout forms by action
+            if (form.action && (form.action.includes('/login') || form.action.includes('/logout'))) {
+                return;
+            }
+            
+            // Skip forms that are status update forms
+            if (form.action && form.action.includes('/status')) {
+                return;
+            }
+            
+            // Skip forms that are simple action forms (like status updates)
+            if (form.method === 'POST' && form.action && form.action.includes('/status')) {
+                return;
+            }
+            
+            const inputs = form.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="checkbox"]), textarea, select');
             if (inputs.length > 1) { // More than just one field (usually the status select)
                 hasInputs = true;
             }

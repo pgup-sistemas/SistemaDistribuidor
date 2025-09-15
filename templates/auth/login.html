@@ -13,7 +13,8 @@
                     <p class="text-muted">Faça login para acessar o sistema</p>
                 </div>
                 
-                <form method="POST">
+                <form method="POST" data-no-warning>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="email" required>

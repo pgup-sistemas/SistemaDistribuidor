@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from models import Order, OrderItem, Customer, Product, StockMovement, Company, db
 from services.whatsapp_service import WhatsAppService
 from services.print_service import PrintService
+from services.email_service import EmailService
 from decimal import Decimal
 import json
 
@@ -123,6 +124,22 @@ def new():
             
             db.session.commit()
             
+            # Enviar confirmação via WhatsApp
+            whatsapp_service = WhatsAppService()
+            whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
+            
+            # Log do resultado do WhatsApp
+            if whatsapp_result['success']:
+                print(f"✅ WhatsApp: Link gerado para {whatsapp_result['phone']}")
+                print(f"🔗 {whatsapp_result['whatsapp_url']}")
+            else:
+                print(f"❌ WhatsApp: Erro - {whatsapp_result['error']}")
+            
+            # Enviar email de confirmação se o cliente tiver email
+            if order.customer.email:
+                email_service = EmailService()
+                email_service.send_order_confirmation(order, order.customer.email)
+            
             flash('Pedido criado com sucesso!', 'success')
             return redirect(url_for('orders.view', id=order.id))
             
@@ -168,15 +185,6 @@ def print_receipt(id):
     
     return response
 
-@orders_bp.route('/<int:id>/whatsapp')
-@login_required
-def send_whatsapp(id):
-    order = Order.query.get_or_404(id)
-    
-    whatsapp_service = WhatsAppService()
-    whatsapp_url = whatsapp_service.generate_order_link(order)
-    
-    return redirect(whatsapp_url)
 
 @orders_bp.route('/<int:id>/status', methods=['POST'])
 @login_required
@@ -185,10 +193,40 @@ def update_status(id):
     new_status = request.form.get('status')
     
     if new_status in ['pending', 'confirmed', 'preparing', 'delivered', 'cancelled']:
+        old_status = order.status
         order.status = new_status
         db.session.commit()
+        
+        # Enviar notificação WhatsApp se o status mudou
+        if old_status != new_status:
+            whatsapp_service = WhatsAppService()
+            whatsapp_result = whatsapp_service.send_order_status_update(order, order.customer.phone, new_status)
+            
+            # Log do resultado do WhatsApp
+            if whatsapp_result['success']:
+                print(f"✅ WhatsApp Status: Link gerado para {whatsapp_result['phone']}")
+                print(f"🔗 {whatsapp_result['whatsapp_url']}")
+            else:
+                print(f"❌ WhatsApp Status: Erro - {whatsapp_result['error']}")
+        
         flash('Status do pedido atualizado!', 'success')
     else:
         flash('Status inválido.', 'error')
+    
+    return redirect(url_for('orders.view', id=id))
+
+@orders_bp.route('/<int:id>/whatsapp')
+@login_required
+def send_whatsapp_confirmation(id):
+    """Enviar link do WhatsApp para o cliente"""
+    order = Order.query.get_or_404(id)
+    
+    whatsapp_service = WhatsAppService()
+    whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
+    
+    if whatsapp_result['success']:
+        flash(f'Link do WhatsApp gerado! Clique aqui para enviar: {whatsapp_result["whatsapp_url"]}', 'info')
+    else:
+        flash(f'Erro ao gerar link do WhatsApp: {whatsapp_result["error"]}', 'error')
     
     return redirect(url_for('orders.view', id=id))

@@ -1,9 +1,36 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from flask_login import login_required, current_user
 from models import Product, Category, Supplier, StockMovement, db
 from decimal import Decimal
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 products_bp = Blueprint('products', __name__)
+
+def allowed_file(filename):
+    """Verificar se o arquivo é uma imagem válida"""
+    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_product_image(file):
+    """Salvar imagem do produto e retornar o caminho"""
+    if file and allowed_file(file.filename):
+        # Gerar nome único para o arquivo
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4()}_{filename}"
+        
+        # Criar diretório se não existir
+        upload_dir = os.path.join(current_app.root_path, 'uploads', 'products')
+        os.makedirs(upload_dir, exist_ok=True)
+        
+        # Salvar arquivo
+        file_path = os.path.join(upload_dir, unique_filename)
+        file.save(file_path)
+        
+        # Retornar URL relativa
+        return f"products/{unique_filename}"
+    return None
 
 @products_bp.route('/')
 @login_required
@@ -59,6 +86,18 @@ def new():
                                  suppliers=Supplier.query.filter_by(active=True).all())
         
         try:
+            # Processar upload de imagem
+            image_url = None
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file.filename:  # Se um arquivo foi selecionado
+                    image_url = save_product_image(image_file)
+                    if not image_url:
+                        flash('Formato de arquivo inválido. Use PNG, JPG, JPEG, GIF ou WEBP.', 'error')
+                        return render_template('products/form.html',
+                                             categories=Category.query.filter_by(active=True).all(),
+                                             suppliers=Supplier.query.filter_by(active=True).all())
+            
             product = Product(
                 sku=sku,
                 name=name,
@@ -67,6 +106,7 @@ def new():
                 cost_price=Decimal(cost_price) if cost_price else None,
                 minimum_stock=minimum_stock,
                 unit=unit,
+                image_url=image_url,
                 category_id=category_id if category_id else None,
                 supplier_id=supplier_id if supplier_id else None
             )
@@ -108,6 +148,25 @@ def edit(id):
                                  suppliers=Supplier.query.filter_by(active=True).all())
         
         try:
+            # Processar upload de nova imagem
+            if 'image' in request.files:
+                image_file = request.files['image']
+                if image_file.filename:  # Se um arquivo foi selecionado
+                    new_image_url = save_product_image(image_file)
+                    if new_image_url:
+                        # Remover imagem antiga se existir
+                        if product.image_url:
+                            old_image_path = os.path.join(current_app.root_path, 'uploads', product.image_url)
+                            if os.path.exists(old_image_path):
+                                os.remove(old_image_path)
+                        product.image_url = new_image_url
+                    else:
+                        flash('Formato de arquivo inválido. Use PNG, JPG, JPEG, GIF ou WEBP.', 'error')
+                        return render_template('products/form.html', 
+                                             product=product,
+                                             categories=Category.query.filter_by(active=True).all(),
+                                             suppliers=Supplier.query.filter_by(active=True).all())
+            
             product.sale_price = Decimal(sale_price)
             product.cost_price = Decimal(cost_price) if cost_price else None
             

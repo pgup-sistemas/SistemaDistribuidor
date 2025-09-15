@@ -80,6 +80,7 @@ class Product(db.Model):
     current_stock = db.Column(db.Integer, default=0)
     minimum_stock = db.Column(db.Integer, default=0)
     unit = db.Column(db.String(10), default='UN')
+    image_url = db.Column(db.String(255))  # URL da imagem do produto
     category_id = db.Column(db.Integer, db.ForeignKey('categories.id'))
     supplier_id = db.Column(db.Integer, db.ForeignKey('suppliers.id'))
     active = db.Column(db.Boolean, default=True)
@@ -107,10 +108,17 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     total = db.Column(db.Numeric(10, 2), nullable=False)
-    payment_method = db.Column(db.String(20), nullable=False)  # cash, card, pix, bank_slip
+    payment_method = db.Column(db.String(20), nullable=False)  # cash, card, pix, bank_slip, mercadopago
     status = db.Column(db.String(20), default='pending')  # pending, confirmed, preparing, delivered, cancelled
     notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # MercadoPago fields
+    payment_id = db.Column(db.String(100))  # ID do pagamento no MercadoPago
+    payment_status = db.Column(db.String(20), default='pending')  # pending, paid, failed, refunded
+    payment_date = db.Column(db.DateTime)
+    preference_id = db.Column(db.String(100))  # ID da preferência no MercadoPago
+    order_token = db.Column(db.String(100), unique=True)  # Token único para pedidos públicos
     
     # Relationships
     order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')

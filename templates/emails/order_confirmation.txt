@@ -1,0 +1,38 @@
+PEDIDO CONFIRMADO - {{ config.COMPANY_NAME }}
+
+Obrigado por escolher nossos serviços!
+
+DETALHES DO PEDIDO:
+===================
+Número do Pedido: #{{ order.id }}
+Data: {{ order.created_at.strftime('%d/%m/%Y %H:%M') }}
+Cliente: {{ order.customer.name }}
+Status: {{ order.status|title }}
+Método de Pagamento: {% if order.payment_method == 'cash' %}Dinheiro{% elif order.payment_method == 'card' %}Cartão{% elif order.payment_method == 'pix' %}PIX{% elif order.payment_method == 'bank_slip' %}Boleto{% elif order.payment_method == 'mercadopago' %}MercadoPago{% else %}{{ order.payment_method }}{% endif %}
+
+ITENS DO PEDIDO:
+================
+{% for item in order.order_items %}
+- {{ item.product.name }}
+  Quantidade: {{ item.quantity }}
+  Preço Unitário: R$ {{ "%.2f"|format(item.unit_price) }}
+  Desconto: R$ {{ "%.2f"|format(item.discount) }}
+  Total: R$ {{ "%.2f"|format((item.unit_price * item.quantity) - item.discount) }}
+
+{% endfor %}
+TOTAL DO PEDIDO: R$ {{ "%.2f"|format(order.total) }}
+
+{% if order.notes %}
+OBSERVAÇÕES:
+============
+{{ order.notes }}
+
+{% endif %}
+INFORMAÇÕES DE CONTATO:
+=======================
+Telefone: {{ config.COMPANY_PHONE }}
+Endereço: {{ config.COMPANY_ADDRESS }}
+
+---
+Este é um email automático do Sistema Distribuidor.
+Para dúvidas, entre em contato conosco.
