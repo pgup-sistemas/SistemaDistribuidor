@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
-from models import Order, OrderItem, Customer, Product, StockMovement, db
+from models import Order, OrderItem, Customer, Product, StockMovement, User, db
 from services.whatsapp_service import WhatsAppService
 from services.email_service import EmailService
+from app import csrf
 from decimal import Decimal
 import json
 import uuid
@@ -27,6 +28,7 @@ def order_form():
     return render_template('public/order_form.html', products=products)
 
 @public_bp.route('/order', methods=['POST'])
+@csrf.exempt
 def create_order():
     """Criar pedido público"""
     try:
@@ -78,10 +80,14 @@ def create_order():
             db.session.add(customer)
             db.session.flush()  # Para obter o ID
         
+        # Get system user for public orders
+        system_user = User.get_system_user()
+        
         # Criar pedido
         order = Order(
             customer_id=customer.id,
-            user_id=1,  # Usuário padrão do sistema
+            user_id=system_user.id,
+            total=Decimal('0.00'),  # Initialize with 0, will be updated after calculating items
             payment_method=payment_method,
             status='pending',
             notes=notes,
@@ -127,7 +133,7 @@ def create_order():
                 quantity=-quantity,
                 movement_type='sale',
                 reason=f'Venda - Pedido #{order.id}',
-                user_id=1
+                user_id=system_user.id
             )
             db.session.add(stock_movement)
             
@@ -168,6 +174,7 @@ def order_status(token):
     return render_template('public/order_status.html', order=order)
 
 @public_bp.route('/api/products')
+@csrf.exempt
 def api_products():
     """API para buscar produtos"""
     products = Product.query.filter_by(active=True).all()
@@ -182,6 +189,7 @@ def api_products():
     } for p in products])
 
 @public_bp.route('/api/order/<token>')
+@csrf.exempt
 def api_order_status(token):
     """API para status do pedido"""
     order = Order.query.filter_by(order_token=token).first_or_404()

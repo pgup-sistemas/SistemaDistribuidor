@@ -19,6 +19,29 @@ class User(UserMixin, db.Model):
     stock_movements = db.relationship('StockMovement', backref='user', lazy=True)
     orders = db.relationship('Order', backref='user', lazy=True)
     deliveries = db.relationship('Delivery', backref='delivery_user', lazy=True)
+    
+    @classmethod
+    def get_system_user(cls):
+        """Get or create system user for public orders and automated actions"""
+        system_email = 'system@distribuidora.internal'
+        system_user = cls.query.filter_by(email=system_email).first()
+        
+        if not system_user:
+            from werkzeug.security import generate_password_hash
+            import secrets
+            
+            # Create system user with secure random password
+            system_user = cls(
+                name='Sistema Público',
+                email=system_email,
+                password_hash=generate_password_hash(secrets.token_urlsafe(32)),
+                role='admin',
+                active=True
+            )
+            db.session.add(system_user)
+            db.session.flush()  # Get the ID without committing the transaction
+        
+        return system_user
 
 class Customer(db.Model):
     __tablename__ = 'customers'
