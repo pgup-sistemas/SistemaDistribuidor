@@ -37,10 +37,12 @@ def create_payment(order_id):
             # Salvar preference_id no pedido
             order.preference_id = result['preference_id']
             order.payment_method = 'mercadopago'
+            order.payment_status = 'pending'
             db.session.commit()
             
             # Redirecionar para o MercadoPago
             payment_url = result.get('sandbox_init_point') or result['init_point']
+            flash('Redirecionando para o MercadoPago...', 'info')
             return redirect(payment_url)
         else:
             flash(f'Erro ao criar pagamento: {result["error"]}', 'error')

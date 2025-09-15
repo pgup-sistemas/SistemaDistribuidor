@@ -19,15 +19,21 @@
                class="btn btn-success" target="_blank">
                 <i class="fab fa-whatsapp"></i> WhatsApp
             </a>
-            {% if order.payment_method == 'mercadopago' and not order.payment_id %}
-            <a href="{{ url_for('payments.create_payment', order_id=order.id) }}" 
-               class="btn btn-warning" target="_blank">
-                <i class="fas fa-credit-card"></i> Pagar com MercadoPago
-            </a>
-            {% elif order.payment_method == 'mercadopago' and order.payment_id %}
-            <button type="button" class="btn btn-info" onclick="checkPaymentStatus({{ order.id }})">
-                <i class="fas fa-sync"></i> Verificar Pagamento
-            </button>
+            {% if order.payment_method == 'mercadopago' %}
+                {% if not order.payment_id %}
+                <a href="{{ url_for('payments.create_payment', order_id=order.id) }}" 
+                   class="btn btn-warning">
+                    <i class="fas fa-credit-card"></i> Processar Pagamento
+                </a>
+                {% elif order.payment_status == 'pending' %}
+                <button type="button" class="btn btn-info" onclick="checkPaymentStatus({{ order.id }})">
+                    <i class="fas fa-sync"></i> Verificar Pagamento
+                </button>
+                {% elif order.payment_status == 'paid' %}
+                <span class="btn btn-success disabled">
+                    <i class="fas fa-check"></i> Pagamento Confirmado
+                </span>
+                {% endif %}
             {% endif %}
             {% if order.status in ['confirmed', 'preparing'] and not order.delivery and current_user.role in ['admin', 'manager'] %}
             <a href="{{ url_for('delivery.assign', order_id=order.id) }}" class="btn btn-warning">
@@ -184,12 +190,31 @@
                 </div>
             </div>
             
+            <!-- Payment Instructions -->
+            {% if order.payment_method == 'mercadopago' and not order.payment_id %}
+            <div class="card mb-3">
+                <div class="card-header bg-warning text-dark">
+                    <h6><i class="fas fa-info-circle"></i> Fluxo de Pagamento</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="mb-0">
+                        <li>Clique em "Processar Pagamento"</li>
+                        <li>Cliente será redirecionado para o MercadoPago</li>
+                        <li>Após o pagamento, o status será atualizado automaticamente</li>
+                        <li>Use "Verificar Pagamento" se necessário</li>
+                    </ol>
+                </div>
+            </div>
+            {% endif %}
+            
             <!-- Back Button -->
             <div class="d-grid">
                 <a href="{{ url_for('orders.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Voltar aos Pedidos
                 </a>
-            </div>
+            </div></div>
+        </div>
+    </div>
         </div>
     </div>
 </div>

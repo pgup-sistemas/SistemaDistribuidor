@@ -54,18 +54,22 @@ class MercadoPagoService:
                     "zip_code": order.customer.cep or "00000000"
                 }
             
+            # Detectar URL base do ambiente
+            import os
+            base_url = os.environ.get('REPL_URL', 'https://f58d4638-3bcb-425b-bf0a-a799ce8f5304-00-2qepgxf1rsafs.riker.replit.dev')
+            
             # Configuração da preferência
             preference_data = {
                 "items": items,
                 "payer": payer_info,
                 "back_urls": {
-                    "success": f"http://localhost:5000/payments/success",
-                    "failure": f"http://localhost:5000/payments/failure",
-                    "pending": f"http://localhost:5000/payments/pending"
+                    "success": f"{base_url}/payments/success",
+                    "failure": f"{base_url}/payments/failure", 
+                    "pending": f"{base_url}/payments/pending"
                 },
                 "auto_return": "approved",
                 "external_reference": str(order.id),
-                "notification_url": f"http://localhost:5000/payments/webhook",
+                "notification_url": f"{base_url}/payments/webhook",
                 "statement_descriptor": Config.COMPANY_NAME[:22],  # Máximo 22 caracteres
                 "metadata": {
                     "order_id": order.id,
