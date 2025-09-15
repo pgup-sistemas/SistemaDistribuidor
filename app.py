@@ -77,6 +77,12 @@ def create_app():
         """Get current year"""
         from datetime import datetime
         return datetime.now().year
+    
+    @app.template_global()
+    def csrf_token():
+        """Generate CSRF token for templates"""
+        from flask_wtf.csrf import generate_csrf
+        return generate_csrf()
 
     @login_manager.user_loader
     def load_user(user_id):

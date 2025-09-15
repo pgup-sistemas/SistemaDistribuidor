@@ -46,7 +46,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        {{ csrf_token() }}
                         
                         <div class="mb-3">
                             <label for="delivery_user_id" class="form-label">Entregador</label>
