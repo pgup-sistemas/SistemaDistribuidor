@@ -12,9 +12,9 @@ class Config:
     COMPANY_ADDRESS = "Rua das Distribuidoras, 123 - São Paulo/SP"
     
     # MercadoPago Configuration
-    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN') or 'APP_USR-2668304845000395-090404-20eaebf5fccdc108395a67dfe48a578c-2429284787'
-    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MERCADOPAGO_PUBLIC_KEY') or 'APP_USR-045851a2-8289-49ee-875e-8939d21d747b'
-    MERCADOPAGO_WEBHOOK_SECRET = os.environ.get('MERCADOPAGO_WEBHOOK_SECRET') or 'webhook_secret_key'
+    MERCADOPAGO_ACCESS_TOKEN = os.environ.get('MERCADOPAGO_ACCESS_TOKEN')
+    MERCADOPAGO_PUBLIC_KEY = os.environ.get('MERCADOPAGO_PUBLIC_KEY')
+    MERCADOPAGO_WEBHOOK_SECRET = os.environ.get('MERCADOPAGO_WEBHOOK_SECRET')
     MERCADOPAGO_SANDBOX = os.environ.get('MERCADOPAGO_SANDBOX', 'true').lower() == 'true'
     
     # Email Configuration

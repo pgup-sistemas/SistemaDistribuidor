@@ -32,7 +32,7 @@ def create_app():
 
     # Configuration
     app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "postgresql://oezios:oezios9@localhost:5432/distributor_system")
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
         "pool_pre_ping": True,
@@ -49,7 +49,7 @@ def create_app():
     mail.init_app(app)
     limiter.init_app(app)
     logging_service.init_app(app)
-    login_manager.login_view = 'auth.login'
+    login_manager.login_view = 'auth.login'  # type: ignore
     login_manager.login_message = 'Por favor, faça login para acessar esta página.'
     login_manager.login_message_category = 'info'
 
@@ -127,13 +127,12 @@ def create_app():
 
         admin = User.query.filter_by(email='admin@distribuidor.com').first()
         if not admin:
-            admin_user = User(
-                name='Administrador',
-                email='admin@distribuidor.com',
-                password_hash=generate_password_hash('admin123'),
-                role='admin',
-                active=True
-            )
+            admin_user = User()
+            admin_user.name = 'Administrador'
+            admin_user.email = 'admin@distribuidor.com'
+            admin_user.password_hash = generate_password_hash('admin123')
+            admin_user.role = 'admin'
+            admin_user.active = True
             db.session.add(admin_user)
             db.session.commit()
             logging.info("Default admin user created: admin@distribuidor.com / admin123")
