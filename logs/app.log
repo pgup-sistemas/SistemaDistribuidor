@@ -297,3 +297,4 @@ Traceback (most recent call last):
 jinja2.exceptions.TemplateNotFound: delivery/assign.html
 2025-09-15 02:41:13,725 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
 2025-09-15 02:51:42,341 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
+2025-09-15 02:58:11,603 INFO: Sistema Distribuidor iniciado [in /home/runner/workspace/services/logging_service.py:42]
