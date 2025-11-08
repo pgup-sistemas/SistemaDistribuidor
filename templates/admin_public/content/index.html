@@ -1,0 +1,160 @@
+{% extends "admin_public/base.html" %}
+
+{% block title %}Gerenciamento de Conteúdo{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-file-alt"></i> Gerenciamento de Conteúdo</h2>
+    </div>
+    <div>
+        <a href="{{ url_for('admin_public.admin_dashboard') }}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-plus"></i> Novo Conteúdo
+        </button>
+        <ul class="dropdown-menu">
+            {% for section_name, section_items in content.items() %}
+            <li>
+                <a class="dropdown-item" href="{{ url_for('admin_public.content_new', section=section_name) }}">
+                    {% if section_name == 'hero' %}Banner Principal
+                    {% elif section_name == 'features' %}Recursos
+                    {% elif section_name == 'about' %}Sobre Nós
+                    {% elif section_name == 'contact' %}Contato
+                    {% elif section_name == 'footer' %}Rodapé
+                    {% else %}{{ section_name|title }}{% endif %}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Seções de Conteúdo -->
+<div class="row">
+    {% for section_name, section_items in content.items() %}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt"></i> 
+                    {% if section_name == 'hero' %}Banner Principal
+                    {% elif section_name == 'features' %}Recursos
+                    {% elif section_name == 'about' %}Sobre Nós
+                    {% elif section_name == 'contact' %}Contato
+                    {% elif section_name == 'footer' %}Rodapé
+                    {% else %}{{ section_name|title }}{% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small">Sem descrição disponível</p>
+
+                <div class="mb-3">
+                    <span class="badge bg-secondary">Disponível</span>
+                    {% if section_items %}
+                    <span class="badge bg-info ms-1">{{ section_items|length }} itens</span>
+                    {% endif %}
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('admin_public.content_section', section=section_name) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-edit"></i> Gerenciar Conteúdo
+                    </a>
+                    <a href="{{ url_for('admin_public.content_section', section=section_name) }}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-cog"></i> Configurações
+                    </a>
+                </div>
+            </div>
+                <div class="card-footer text-muted small">
+                Last updated: Never
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Content Statistics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar"></i> Content Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-primary">{{ total_sections }}</h3>
+                            <p class="text-muted">Total Sections</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-success">{{ published_content }}</h3>
+                            <p class="text-muted">Published Items</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-warning">{{ draft_content }}</h3>
+                            <p class="text-muted">Draft Items</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h3 class="text-info">{{ total_content }}</h3>
+                            <p class="text-muted">Total Content</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Content Activity -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Content Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Action</th>
+                                <th>Content</th>
+                                <th>Section</th>
+                                <th>User</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in recent_activity %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-{% if activity.action == 'created' %}success{% elif activity.action == 'updated' %}primary{% elif activity.action == 'published' %}info{% else %}secondary{% endif %}">
+                                        {{ activity.action|title }}
+                                    </span>
+                                </td>
+                                <td>{{ activity.content_title }}</td>
+                                <td>{{ activity.section_name }}</td>
+                                <td>{{ activity.user_name }}</td>
+                                <td>{{ activity.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if not recent_activity %}
+                <p class="text-muted text-center">No recent activity</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

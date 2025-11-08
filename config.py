@@ -1,9 +1,20 @@
 import os
+from dotenv import load_dotenv
+
+# Carregar variáveis do arquivo .env
+load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SESSION_SECRET') or 'dev-secret-key'
+    # Carregar variáveis de ambiente com fallbacks seguros
+    SECRET_KEY = os.environ.get('SESSION_SECRET') or 'MFKlGunyCTcnwoCPrTO83-VOSgLBBF2OdN2WI4KTOTaim4dcG0qp1x6MflntEEzDRvU'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'postgresql://oezios:oezios9@localhost:5432/distributor_system'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    
+    # URL Base para callbacks
+    BASE_URL = os.environ.get('BASE_URL') or 'http://localhost:5000'
+    
+    # Gateway de Pagamento
+    PAYMENT_PROVIDER = os.environ.get('PAYMENT_PROVIDER', 'mercadopago')
     
     # App specific settings
     ITEMS_PER_PAGE = 20

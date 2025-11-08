@@ -114,6 +114,17 @@ MERCADOPAGO_SANDBOX=false
 LOG_LEVEL=INFO
 REDIS_URL=redis://localhost:6379/0
 SENTRY_DSN=sua_sentry_dsn_se_tiver
+APP_VERSION=1.0.0
+SERVER_NAME=production-server
+BACKUP_RETENTION_DAYS=30
+
+# Integração NF-e (Opcional - para importação automática)
+NFE_ENVIRONMENT=homologation
+NFE_API_PROVIDER=sefaz
+NFE_CERT_PATH=/caminho/para/certificado.pfx
+NFE_CERT_PASSWORD=sua_senha
+NFE_DEFAULT_MARKUP=1.3
+NFE_DEFAULT_MIN_STOCK=5
 ```
 
 ### 4. Executar Migrações
@@ -289,42 +300,34 @@ tail -f /opt/distributor/logs/payments.log
 
 ### 2. Backup Automático
 ```bash
-# Criar script de backup
-sudo nano /opt/distributor/backup.sh
-```
-
-**Conteúdo:**
-```bash
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-BACKUP_DIR="/opt/backups"
-DB_NAME="distributor_system"
-DB_USER="distributor_user"
-
-# Criar diretório de backup
-mkdir -p $BACKUP_DIR
-
-# Backup do banco
-pg_dump -h localhost -U $DB_USER $DB_NAME > $BACKUP_DIR/db_backup_$DATE.sql
-
-# Backup dos arquivos
-tar -czf $BACKUP_DIR/files_backup_$DATE.tar.gz /opt/distributor
-
-# Remover backups antigos (manter últimos 7 dias)
-find $BACKUP_DIR -name "*.sql" -mtime +7 -delete
-find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
-
-echo "Backup concluído: $DATE"
-```
-
-```bash
-# Tornar executável
-sudo chmod +x /opt/distributor/backup.sh
-
-# Configurar cron (executar diariamente às 2h)
+# Configurar backups automáticos diários
 sudo crontab -e
-# Adicionar linha:
-# 0 2 * * * /opt/distributor/backup.sh
+# Adicionar linha para backup diário às 2h:
+# 0 2 * * * cd /opt/distributor && python backup_service.py
+
+# Ou para backup mais frequente (a cada 6 horas):
+# 0 */6 * * * cd /opt/distributor && python backup_service.py
+
+# Verificar backups
+python backup_service.py --info
+```
+
+### 3. Integração NF-e (Opcional)
+```bash
+# Para integração com APIs NF-e, configure as variáveis de ambiente:
+# NFE_ENVIRONMENT=production
+# NFE_API_PROVIDER=focusnfe  # ou sefaz
+# NFE_CERT_PATH=/path/to/cert.pfx
+# NFE_CERT_PASSWORD=your_password
+
+# Testar conexão
+curl -X POST http://localhost:8000/nfe-integration/test-connection
+
+# A integração permite:
+# - Consulta automática de NF-e por chave de acesso
+# - Importação automática de produtos
+# - Processamento de arquivos XML
+# - Markup automático nos preços de venda
 ```
 
 ## 🔧 Comandos Úteis

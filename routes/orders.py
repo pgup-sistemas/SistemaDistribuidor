@@ -1,9 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, make_response
 from flask_login import login_required, current_user
 from models import Order, OrderItem, Customer, Product, StockMovement, Company, db
-from services.whatsapp_service import WhatsAppService
-from services.print_service import PrintService
-from services.email_service import EmailService
 from decimal import Decimal
 import json
 
@@ -22,7 +19,9 @@ def index():
     
     orders = query.order_by(Order.created_at.desc()).paginate(
         page=page, per_page=20, error_out=False)
-    
+
+    print(f"[DEBUG] Admin orders query returned {orders.total} total orders, page {page} has {len(orders.items)} items")
+
     return render_template('orders/index.html', orders=orders, selected_status=status)
 
 @orders_bp.route('/new', methods=['GET', 'POST'])
@@ -32,6 +31,14 @@ def new():
     selected_customer_id = request.args.get('customer_id', type=int)
     
     if request.method == 'POST':
+        # Validate CSRF token manually since we're not using WTForms
+        from flask_wtf.csrf import validate_csrf
+        try:
+            validate_csrf(request.form.get('csrf_token'))
+        except:
+            flash('Token de segurança inválido. Por favor, recarregue a página.', 'error')
+            return redirect(url_for('orders.new'))
+        
         customer_id = request.form.get('customer_id', type=int)
         payment_method = request.form.get('payment_method')
         notes = request.form.get('notes')
@@ -124,21 +131,28 @@ def new():
             
             db.session.commit()
             
-            # Enviar confirmação via WhatsApp
-            whatsapp_service = WhatsAppService()
-            whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
+            # Import and send WhatsApp notification (lazy import to avoid circular import)
+            try:
+                from services.whatsapp_service import WhatsAppService
+                whatsapp_service = WhatsAppService()
+                whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
+                
+                if whatsapp_result['success']:
+                    print(f"✅ WhatsApp: Link gerado para {whatsapp_result['phone']}")
+                    print(f"🔗 {whatsapp_result['whatsapp_url']}")
+                else:
+                    print(f"❌ WhatsApp: Erro - {whatsapp_result['error']}")
+            except Exception as e:
+                print(f"⚠️ WhatsApp service error: {e}")
             
-            # Log do resultado do WhatsApp
-            if whatsapp_result['success']:
-                print(f"✅ WhatsApp: Link gerado para {whatsapp_result['phone']}")
-                print(f"🔗 {whatsapp_result['whatsapp_url']}")
-            else:
-                print(f"❌ WhatsApp: Erro - {whatsapp_result['error']}")
-            
-            # Enviar email de confirmação se o cliente tiver email
-            if order.customer.email:
-                email_service = EmailService()
-                email_service.send_order_confirmation(order, order.customer.email)
+            # Import and send email notification (lazy import to avoid circular import)
+            try:
+                if order.customer.email:
+                    from services.email_service import EmailService
+                    email_service = EmailService()
+                    email_service.send_order_confirmation(order, order.customer.email)
+            except Exception as e:
+                print(f"⚠️ Email service error: {e}")
             
             flash('Pedido criado com sucesso!', 'success')
             return redirect(url_for('orders.view', id=order.id))
@@ -174,15 +188,26 @@ def receipt(id):
 @login_required
 def print_receipt(id):
     order = Order.query.get_or_404(id)
-    
-    # Generate PDF receipt
+
+    # Import print service lazily to avoid circular import
+    from services.print_service import PrintService
     print_service = PrintService()
-    pdf_content = print_service.generate_receipt(order)
-    
-    response = make_response(pdf_content)
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=pedido_{order.id}.pdf'
-    
+    content, content_type = print_service.generate_receipt(order)
+
+    # Set appropriate headers based on content type
+    print(f"[ORDERS] Content type: {content_type}, length: {len(content) if content else 0}")
+    response = make_response(content)
+
+    if content_type == 'application/pdf':
+        print(f"[ORDERS] Returning PDF response for order {order.id}")
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=recibo_pedido_{order.id}.pdf'
+    else:
+        # HTML fallback
+        print(f"[ORDERS] Returning HTML fallback for order {order.id}")
+        response.headers['Content-Type'] = 'text/html'
+        response.headers['Content-Disposition'] = f'inline; filename=recibo_pedido_{order.id}.html'
+
     return response
 
 
@@ -192,22 +217,33 @@ def update_status(id):
     order = Order.query.get_or_404(id)
     new_status = request.form.get('status')
     
+    # Validate CSRF token
+    from flask_wtf.csrf import validate_csrf
+    try:
+        validate_csrf(request.form.get('csrf_token'))
+    except:
+        flash('Token de segurança inválido.', 'error')
+        return redirect(url_for('orders.view', id=id))
+    
     if new_status in ['pending', 'confirmed', 'preparing', 'delivered', 'cancelled']:
         old_status = order.status
         order.status = new_status
         db.session.commit()
         
-        # Enviar notificação WhatsApp se o status mudou
-        if old_status != new_status:
-            whatsapp_service = WhatsAppService()
-            whatsapp_result = whatsapp_service.send_order_status_update(order, order.customer.phone, new_status)
-            
-            # Log do resultado do WhatsApp
-            if whatsapp_result['success']:
-                print(f"✅ WhatsApp Status: Link gerado para {whatsapp_result['phone']}")
-                print(f"🔗 {whatsapp_result['whatsapp_url']}")
-            else:
-                print(f"❌ WhatsApp Status: Erro - {whatsapp_result['error']}")
+        # Import and send WhatsApp notification (lazy import)
+        try:
+            if old_status != new_status:
+                from services.whatsapp_service import WhatsAppService
+                whatsapp_service = WhatsAppService()
+                whatsapp_result = whatsapp_service.send_order_status_update(order, order.customer.phone, new_status)
+                
+                if whatsapp_result['success']:
+                    print(f"✅ WhatsApp Status: Link gerado para {whatsapp_result['phone']}")
+                    print(f"🔗 {whatsapp_result['whatsapp_url']}")
+                else:
+                    print(f"❌ WhatsApp Status: Erro - {whatsapp_result['error']}")
+        except Exception as e:
+            print(f"⚠️ WhatsApp service error: {e}")
         
         flash('Status do pedido atualizado!', 'success')
     else:
@@ -221,6 +257,8 @@ def send_whatsapp_confirmation(id):
     """Enviar link do WhatsApp para o cliente"""
     order = Order.query.get_or_404(id)
     
+    # Import WhatsApp service lazily
+    from services.whatsapp_service import WhatsAppService
     whatsapp_service = WhatsAppService()
     whatsapp_result = whatsapp_service.send_order_confirmation(order, order.customer.phone)
     

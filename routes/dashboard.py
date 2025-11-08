@@ -9,6 +9,7 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/')
 @login_required
 def index():
+    print(f"Dashboard accessed by user: {current_user.name if current_user.is_authenticated else 'None'}")
     # Calculate KPIs
     today = datetime.utcnow().date()
     

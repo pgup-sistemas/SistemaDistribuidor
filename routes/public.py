@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
-from models import Order, OrderItem, Customer, Product, StockMovement, User, db
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session, current_app
+from models import Order, OrderItem, Customer, Product, StockMovement, User, CompanySettings, PublicContent, db
 from services.whatsapp_service import WhatsAppService
 from services.email_service import EmailService
 from app import csrf
@@ -13,19 +13,60 @@ public_bp = Blueprint('public', __name__)
 @public_bp.route('/')
 def index():
     """Página inicial pública"""
-    return render_template('public/index.html')
+    try:
+        # Fetch company settings
+        company_settings = CompanySettings.query.filter_by(active=True).first()
+
+        # Fetch public content for hero section
+        hero_content = PublicContent.query.filter_by(section='hero', active=True).order_by(PublicContent.order).first()
+
+        # Fetch features content
+        features_content = PublicContent.query.filter_by(section='features', active=True).order_by(PublicContent.order).all()
+
+        # Fetch about content
+        about_content = PublicContent.query.filter_by(section='about', active=True).order_by(PublicContent.order).first()
+
+        # Fetch contact content
+        contact_content = PublicContent.query.filter_by(section='contact', active=True).order_by(PublicContent.order).first()
+
+        # Fetch footer content
+        footer_content = PublicContent.query.filter_by(section='footer', active=True).order_by(PublicContent.order).first()
+
+        return render_template('public/index.html',
+                             company_settings=company_settings,
+                             hero_content=hero_content,
+                             features_content=features_content,
+                             about_content=about_content,
+                             contact_content=contact_content,
+                             footer_content=footer_content)
+    except Exception as e:
+        print(f"[ERROR] Error loading public content: {str(e)}")
+        # Fallback to config values
+        return render_template('public/index.html')
 
 @public_bp.route('/menu')
 def menu():
     """Menu público de produtos"""
-    products = Product.query.filter_by(active=True).all()
-    return render_template('public/menu.html', products=products)
+    try:
+        products = Product.query.filter_by(active=True).all()
+        company_settings = CompanySettings.query.filter_by(active=True).first()
+        return render_template('public/menu.html', products=products, company_settings=company_settings)
+    except Exception as e:
+        print(f"[ERROR] Error loading menu: {str(e)}")
+        products = Product.query.filter_by(active=True).all()
+        return render_template('public/menu.html', products=products)
 
 @public_bp.route('/order')
 def order_form():
     """Formulário público de pedido"""
-    products = Product.query.filter_by(active=True).all()
-    return render_template('public/order_form.html', products=products)
+    try:
+        products = Product.query.filter_by(active=True).all()
+        company_settings = CompanySettings.query.filter_by(active=True).first()
+        return render_template('public/order_form.html', products=products, company_settings=company_settings)
+    except Exception as e:
+        print(f"[ERROR] Error loading order form: {str(e)}")
+        products = Product.query.filter_by(active=True).all()
+        return render_template('public/order_form.html', products=products)
 
 @public_bp.route('/order', methods=['POST'])
 @csrf.exempt
@@ -81,8 +122,14 @@ def create_order():
             db.session.flush()  # Para obter o ID
         
         # Get system user for public orders
+        print(f"[DEBUG] Attempting to get system user for public order")
         system_user = User.get_system_user()
-        
+        print(f"[DEBUG] System user obtained: ID={system_user.id}, active={system_user.active}, role={system_user.role}")
+        if not system_user.active:
+            print(f"[ERROR] System user is not active! Cannot create order.")
+            flash('Erro interno do sistema. Tente novamente mais tarde.', 'error')
+            return redirect(url_for('public.order_form'))
+
         # Criar pedido
         order = Order(
             customer_id=customer.id,
@@ -93,26 +140,37 @@ def create_order():
             notes=notes,
             order_token=str(uuid.uuid4())  # Token único para o pedido
         )
-        
+
         db.session.add(order)
         db.session.flush()  # Para obter o ID
+        print(f"[DEBUG] Order created with ID: {order.id}, token: {order.order_token}")
         
         # Calcular total e adicionar itens
         total = Decimal('0.00')
+        print(f"[DEBUG] Processing {len(items)} items for order")
         for item_data in items:
             product_id = item_data.get('product_id')
             quantity = int(item_data.get('quantity', 1))
             unit_price = Decimal(str(item_data.get('unit_price', 0)))
             discount = Decimal(str(item_data.get('discount', 0)))
-            
+
+            print(f"[DEBUG] Processing item: product_id={product_id}, quantity={quantity}")
+
             product = Product.query.get(product_id)
             if not product:
+                print(f"[DEBUG] Product {product_id} not found")
                 continue
-            
+
+            print(f"[DEBUG] Product {product.name} has stock {product.current_stock}, active={product.active}")
+
             # Verificar estoque
             if product.current_stock < quantity:
+                print(f"[ERROR] Insufficient stock for {product.name}: requested {quantity}, available {product.current_stock}")
                 flash(f'Estoque insuficiente para {product.name}. Disponível: {product.current_stock}', 'error')
+                db.session.rollback()
                 return redirect(url_for('public.order_form'))
+            else:
+                print(f"[DEBUG] Stock check passed for {product.name}: requested {quantity}, available {product.current_stock}")
             
             # Criar item do pedido
             order_item = OrderItem(
@@ -126,6 +184,9 @@ def create_order():
             
             # Atualizar estoque
             product.current_stock -= quantity
+            # Prevent negative stock
+            if product.current_stock < 0:
+                product.current_stock = 0
             
             # Criar movimento de estoque
             stock_movement = StockMovement(
@@ -143,7 +204,8 @@ def create_order():
         
         order.total = total
         db.session.commit()
-        
+        print(f"[DEBUG] Order {order.id} committed successfully with total {order.total}")
+
         # Enviar confirmação via WhatsApp
         whatsapp_service = WhatsAppService()
         whatsapp_service.send_order_confirmation(order, customer_phone)
@@ -158,20 +220,35 @@ def create_order():
         
     except Exception as e:
         db.session.rollback()
+        print(f"[ERROR] Exception creating public order: {str(e)}")
+        import traceback
+        print(f"[ERROR] Traceback: {traceback.format_exc()}")
         flash(f'Erro ao criar pedido: {str(e)}', 'error')
         return redirect(url_for('public.order_form'))
 
 @public_bp.route('/order/success/<token>')
 def order_success(token):
     """Página de sucesso do pedido"""
-    order = Order.query.filter_by(order_token=token).first_or_404()
-    return render_template('public/order_success.html', order=order)
+    try:
+        order = Order.query.filter_by(order_token=token).first_or_404()
+        company_settings = CompanySettings.query.filter_by(active=True).first()
+        return render_template('public/order_success.html', order=order, company_settings=company_settings)
+    except Exception as e:
+        print(f"[ERROR] Error loading order success: {str(e)}")
+        order = Order.query.filter_by(order_token=token).first_or_404()
+        return render_template('public/order_success.html', order=order)
 
 @public_bp.route('/order/status/<token>')
 def order_status(token):
     """Verificar status do pedido"""
-    order = Order.query.filter_by(order_token=token).first_or_404()
-    return render_template('public/order_status.html', order=order)
+    try:
+        order = Order.query.filter_by(order_token=token).first_or_404()
+        company_settings = CompanySettings.query.filter_by(active=True).first()
+        return render_template('public/order_status.html', order=order, company_settings=company_settings)
+    except Exception as e:
+        print(f"[ERROR] Error loading order status: {str(e)}")
+        order = Order.query.filter_by(order_token=token).first_or_404()
+        return render_template('public/order_status.html', order=order)
 
 @public_bp.route('/api/products')
 @csrf.exempt

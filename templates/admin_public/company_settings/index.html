@@ -1,0 +1,159 @@
+{% extends "admin_public/base.html" %}
+
+{% block title %}Configurações da Empresa - Gerenciamento de Conteúdo Público{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-building"></i> Configurações da Empresa</h2>
+    </div>
+    <div>
+        <a href="{{ url_for('admin_public.admin_dashboard') }}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <a href="{{ url_for('admin_public.company_settings_edit') }}" class="btn btn-primary">
+            <i class="fas fa-edit"></i> Editar Configurações
+        </a>
+    </div>
+</div>
+
+{% if company_settings %}
+<div class="row">
+    <!-- Informações Gerais -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Informações Gerais</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Nome da Empresa:</strong><br>
+                    {{ company_settings.company_name }}
+                </div>
+                {% if company_settings.trade_name %}
+                <div class="mb-3">
+                    <strong>Nome Fantasia:</strong><br>
+                    {{ company_settings.trade_name }}
+                </div>
+                {% endif %}
+                <div class="mb-3">
+                    <strong>CNPJ:</strong><br>
+                    {{ company_settings.cnpj[:2] }}.{{ company_settings.cnpj[2:5] }}.{{ company_settings.cnpj[5:8] }}/{{ company_settings.cnpj[8:12] }}-{{ company_settings.cnpj[12:] }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações de Contato -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-phone"></i> Informações de Contato</h5>
+            </div>
+            <div class="card-body">
+                {% if company_settings.phone %}
+                <div class="mb-3">
+                    <strong>Telefone:</strong><br>
+                    {{ company_settings.phone }}
+                </div>
+                {% endif %}
+                {% if company_settings.email %}
+                <div class="mb-3">
+                    <strong>E-mail:</strong><br>
+                    {{ company_settings.email }}
+                </div>
+                {% endif %}
+                {% if company_settings.website %}
+                <div class="mb-3">
+                    <strong>Site:</strong><br>
+                    {{ company_settings.website }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Configurações de Exibição -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-globe"></i> Configurações de Exibição</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <strong>Exibir Logo da Empresa:</strong><br>
+                        <span class="badge bg-{% if company_settings.show_logo %}success{% else %}secondary{% endif %}">
+                            {{ 'Sim' if company_settings.show_logo else 'Não' }}
+                        </span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Exibir Informações de Contato:</strong><br>
+                        <span class="badge bg-{% if company_settings.show_contact %}success{% else %}secondary{% endif %}">
+                            {{ 'Sim' if company_settings.show_contact else 'Não' }}
+                        </span>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <strong>Exibir Redes Sociais:</strong><br>
+                        <span class="badge bg-{% if company_settings.show_social %}success{% else %}secondary{% endif %}">
+                            {{ 'Sim' if company_settings.show_social else 'Não' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Horário de Funcionamento -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-clock"></i> Horário de Funcionamento</h5>
+            </div>
+            <div class="card-body">
+                {% if company_settings.business_hours %}
+                    {% for day, hours in company_settings.business_hours.items() %}
+                    <div class="mb-2">
+                        <strong>{{ day }}:</strong> {{ hours }}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Horário de funcionamento não configurado</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Links de Redes Sociais -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-share-alt"></i> Redes Sociais</h5>
+            </div>
+            <div class="card-body">
+                {% if company_settings.social_links %}
+                    {% for platform, url in company_settings.social_links.items() %}
+                    <div class="mb-2">
+                        <strong>{{ platform|title }}:</strong>
+                        <a href="{{ url }}" target="_blank">{{ url }}</a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Links de redes sociais não configurados</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="fas fa-info-circle fa-2x mb-3"></i>
+    <h4>Configurações da empresa não definidas</h4>
+    <p>Configure as informações da sua empresa para o site público.</p>
+    <a href="{{ url_for('admin_public.company_settings_edit') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Configurar Empresa
+    </a>
+</div>
+{% endif %}
+{% endblock %}

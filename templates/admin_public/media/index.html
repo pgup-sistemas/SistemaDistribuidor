@@ -1,0 +1,255 @@
+{% extends "admin_public/base.html" %}
+
+{% block title %}Biblioteca de Mídia{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-images"></i> Biblioteca de Mídia</h2>
+    </div>
+    <div>
+        <a href="{{ url_for('admin_public.admin_dashboard') }}" class="btn btn-secondary me-2">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+            <i class="fas fa-upload"></i> Enviar Mídia
+        </button>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ request.args.get('search', '') }}" placeholder="Buscar mídia...">
+            </div>
+            <div class="col-md-3">
+                <label for="type" class="form-label">Tipo</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">Todos os Tipos</option>
+                    <option value="image" {% if request.args.get('type') == 'image' %}selected{% endif %}>Imagens</option>
+                    <option value="video" {% if request.args.get('type') == 'video' %}selected{% endif %}>Vídeos</option>
+                    <option value="document" {% if request.args.get('type') == 'document' %}selected{% endif %}>Documentos</option>
+                    <option value="audio" {% if request.args.get('type') == 'audio' %}selected{% endif %}>Áudio</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="sort" class="form-label">Ordenar Por</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="uploaded_at" {% if request.args.get('sort', 'uploaded_at') == 'uploaded_at' %}selected{% endif %}>Data de Upload</option>
+                    <option value="name" {% if request.args.get('sort') == 'name' %}selected{% endif %}>Nome</option>
+                    <option value="size" {% if request.args.get('sort') == 'size' %}selected{% endif %}>Tamanho</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-search"></i> Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Media Grid -->
+<div class="card">
+    <div class="card-body">
+        {% if media_files %}
+        <div class="row">
+            {% for media in media_files %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100 media-item" data-media-id="{{ media.id }}">
+                    <div class="card-body text-center">
+                        {% if media.type == 'image' %}
+                        <img src="{{ media.thumbnail_url or media.url }}" alt="{{ media.name }}"
+                             class="img-fluid rounded mb-2" style="max-height: 150px;">
+                        {% elif media.type == 'video' %}
+                        <i class="fas fa-video fa-3x text-primary mb-2"></i>
+                        {% elif media.type == 'document' %}
+                        <i class="fas fa-file-alt fa-3x text-secondary mb-2"></i>
+                        {% elif media.type == 'audio' %}
+                        <i class="fas fa-music fa-3x text-info mb-2"></i>
+                        {% else %}
+                        <i class="fas fa-file fa-3x text-muted mb-2"></i>
+                        {% endif %}
+
+                        <h6 class="card-title text-truncate" title="{{ media.name }}">{{ media.name }}</h6>
+                        <p class="card-text small text-muted">
+                            {{ media.size_formatted }}<br>
+                            {{ media.uploaded_at.strftime('%d/%m/%Y') }}
+                        </p>
+
+                        <div class="btn-group w-100" role="group">
+                            <button type="button" class="btn btn-sm btn-outline-primary select-media-btn"
+                                    data-url="{{ media.url }}" data-name="{{ media.name }}">
+                                <i class="fas fa-check"></i> Selecionar
+                            </button>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{{ media.url }}" target="_blank">
+                                        <i class="fas fa-external-link-alt"></i> Ver Tamanho Original
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="copyToClipboard('{{ media.url }}')">
+                                        <i class="fas fa-copy"></i> Copiar URL
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{{ url_for('admin_public.media_delete', id=media.id) }}"
+                                           onclick="return confirm('Tem certeza que deseja excluir este arquivo?')">
+                                        <i class="fas fa-trash"></i> Excluir
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginação -->
+        {% if pagination %}
+        <nav aria-label="Paginação de mídia" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_public.media_index', page=pagination.prev_num, **request.args) }}">
+                        Anterior
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin_public.media_index', page=page_num, **request.args) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_public.media_index', page=pagination.next_num, **request.args) }}">
+                        Próximo
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Próximo</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-images fa-3x text-muted mb-3"></i>
+            <h4>Nenhum arquivo de mídia encontrado</h4>
+            <p class="text-muted">Envie seu primeiro arquivo de mídia para começar.</p>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fas fa-upload"></i> Enviar Mídia
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal de Upload -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-upload"></i> Enviar Mídia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_public.media_upload') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                    <div class="mb-3">
+                        <label for="files" class="form-label">Selecionar Arquivos <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="files" name="files" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt" required>
+                        <div class="form-text">Formatos suportados: Imagens, Vídeos, Áudio, PDF, Documentos, Arquivos de texto</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="alt_text" class="form-label">Texto Alternativo (para imagens)</label>
+                        <input type="text" class="form-control" id="alt_text" name="alt_text" maxlength="200">
+                        <div class="form-text">Texto alternativo para acessibilidade</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Descrição</label>
+                        <textarea class="form-control" id="description" name="description" rows="3" maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar Arquivos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Mostrar mensagem de sucesso
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-success border-0';
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">URL copiada para a área de transferência!</div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        setTimeout(() => toast.remove(), 3000);
+    });
+}
+
+// Handle media selection for content forms
+document.querySelectorAll('.select-media-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const url = this.getAttribute('data-url');
+        const name = this.getAttribute('data-name');
+
+        // If opened from content form, insert into form
+        if (window.opener && window.opener.insertMedia) {
+            window.opener.insertMedia(url, name);
+            window.close();
+        } else {
+            copyToClipboard(url);
+            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check"></i> Select';
+            }, 2000);
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

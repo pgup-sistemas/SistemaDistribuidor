@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Configurações NF-e - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cog"></i> Configurações NF-e</h1>
+        <a href="{{ url_for('nfe_integration.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+
+    <!-- Status Atual -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle"></i> Status da Configuração</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <span class="badge bg-{{ 'success' if config.ready_for_production else 'warning' }} fs-6">
+                                    {{ "Pronto" if config.ready_for_production else "Configurar" }}
+                                </span>
+                                <div class="mt-1">
+                                    <small class="text-muted">Produção</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h6 mb-1">{{ config.api_provider.title() }}</div>
+                                <small class="text-muted">API Provider</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h6 mb-1">{{ config.environment.title() }}</div>
+                                <small class="text-muted">Ambiente</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="h6 mb-1">{{ "%.0f"|format((config.default_markup - 1) * 100) }}%</div>
+                                <small class="text-muted">Markup</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Variáveis de Ambiente -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-server"></i> Configuração de Ambiente</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">
+                        Configure as seguintes variáveis de ambiente no seu servidor:
+                    </p>
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-file-code"></i> Arquivo .env</h6>
+                        <pre class="mb-0"><code># Integração NF-e
+NFE_ENVIRONMENT=homologation  # ou production
+NFE_API_PROVIDER=sefaz        # sefaz, focusnfe
+NFE_CERT_PATH=/path/to/cert.pfx
+NFE_CERT_PASSWORD=your_password
+NFE_DEFAULT_MARKUP=1.3        # 30% markup
+NFE_DEFAULT_MIN_STOCK=5</code></pre>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h6>Para SEFAZ (Gratuito):</h6>
+                            <ul>
+                                <li>Certificado Digital A1/A3</li>
+                                <li>Complexidade alta de implementação</li>
+                                <li>Manutenção de certificados</li>
+                                <li>Conformidade total</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Para Provedores (Pago):</h6>
+                            <ul>
+                                <li>API pronta para uso</li>
+                                <li>Suporte técnico incluído</li>
+                                <li>Certificados gerenciados</li>
+                                <li>R$ 100-200/mês</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provedores Recomendados -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-handshake"></i> Provedores de API NF-e Recomendados</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">Focus NFe</h6>
+                                    <p class="card-text">API completa para NF-e</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✅ Consulta NF-e</li>
+                                        <li>✅ Webhooks</li>
+                                        <li>✅ Suporte técnico</li>
+                                        <li>💰 R$ 100-150/mês</li>
+                                    </ul>
+                                    <a href="https://focusnfe.com.br" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        Visitar Site
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">WebISS</h6>
+                                    <p class="card-text">Especializado em NF-e</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✅ API REST</li>
+                                        <li>✅ Documentação completa</li>
+                                        <li>✅ SLA garantido</li>
+                                        <li>💰 R$ 80-120/mês</li>
+                                    </ul>
+                                    <a href="https://webiss.com.br" target="_blank" class="btn btn-sm btn-outline-success">
+                                        Visitar Site
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">SEFAZ Direto</h6>
+                                    <p class="card-text">Integração oficial</p>
+                                    <ul class="list-unstyled small">
+                                        <li>✅ 100% gratuito</li>
+                                        <li>✅ Dados oficiais</li>
+                                        <li>✅ Sem intermediários</li>
+                                        <li>⚠️ Complexo de implementar</li>
+                                    </ul>
+                                    <a href="https://www.nfe.fazenda.gov.br" target="_blank" class="btn btn-sm btn-outline-info">
+                                        Portal SEFAZ
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Próximos Passos -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-road"></i> Próximos Passos para Ativação</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>1. Escolher Provedor</h6>
+                            <p>Contrate um provedor de API NF-e ou prepare certificados SEFAZ.</p>
+
+                            <h6>2. Configurar Ambiente</h6>
+                            <p>Defina as variáveis de ambiente no servidor de produção.</p>
+
+                            <h6>3. Testar Integração</h6>
+                            <p>Use o botão "Testar Conexão" para validar a configuração.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>4. Ativar em Produção</h6>
+                            <p>Mude NFE_ENVIRONMENT para 'production'.</p>
+
+                            <h6>5. Monitorar</h6>
+                            <p>Acompanhe logs e use dados reais de NF-e.</p>
+
+                            <h6>6. Suporte</h6>
+                            <p>Entre em contato conosco para assistência técnica.</p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success mt-3">
+                        <h6><i class="fas fa-lightbulb"></i> Dica Importante</h6>
+                        <p class="mb-0">
+                            Comece com um provedor pago para validar o fluxo, depois migre para SEFAZ direto se necessário.
+                            A diferença de custo (R$ 100-200/mês) é compensada pela agilidade e suporte técnico.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

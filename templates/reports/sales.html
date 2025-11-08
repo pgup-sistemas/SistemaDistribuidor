@@ -7,32 +7,72 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1><i class="fas fa-chart-line"></i> Relatório de Vendas</h1>
         <div class="btn-group">
-            <a href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, export='csv') }}" 
+            <a href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, export='csv') }}"
                class="btn btn-success">
                 <i class="fas fa-file-csv"></i> Exportar CSV
             </a>
+            {% if weasyprint_available %}
+            <a href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, export='pdf') }}"
+               class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> Exportar PDF
+            </a>
+            {% endif %}
             <a href="{{ url_for('reports.index') }}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Voltar
             </a>
         </div>
     </div>
     
-    <!-- Date Filter -->
+    <!-- Advanced Filters -->
     <div class="card mb-4">
+        <div class="card-header">
+            <h5><i class="fas fa-filter"></i> Filtros Avançados</h5>
+        </div>
         <div class="card-body">
             <form method="GET" class="row align-items-end">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="start_date" class="form-label">Data Inicial</label>
                     <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label for="end_date" class="form-label">Data Final</label>
                     <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
                 </div>
-                <div class="col-md-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-filter"></i> Filtrar
+                <div class="col-md-2">
+                    <label for="payment_method" class="form-label">Pagamento</label>
+                    <select class="form-control" id="payment_method" name="payment_method">
+                        <option value="">Todos</option>
+                        <option value="cash" {% if filters.payment_method == 'cash' %}selected{% endif %}>Dinheiro</option>
+                        <option value="card" {% if filters.payment_method == 'card' %}selected{% endif %}>Cartão</option>
+                        <option value="pix" {% if filters.payment_method == 'pix' %}selected{% endif %}>PIX</option>
+                        <option value="bank_slip" {% if filters.payment_method == 'bank_slip' %}selected{% endif %}>Boleto</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="customer_id" class="form-label">Cliente</label>
+                    <select class="form-control" id="customer_id" name="customer_id">
+                        <option value="">Todos</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" {% if filters.customer_id == customer.id|string %}selected{% endif %}>{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="category_id" class="form-label">Categoria</label>
+                    <select class="form-control" id="category_id" name="category_id">
+                        <option value="">Todas</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if filters.category_id == category.id|string %}selected{% endif %}>{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-12 mt-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
                     </button>
+                    <a href="{{ url_for('reports.sales') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Limpar Filtros
+                    </a>
                 </div>
             </form>
         </div>
@@ -47,6 +87,16 @@
                         <div>
                             <h4>R$ {{ "%.2f"|format(total_sales) }}</h4>
                             <p class="mb-0">Total de Vendas</p>
+                            {% if prev_total_sales > 0 %}
+                            <small>
+                                {% if sales_growth >= 0 %}
+                                <i class="fas fa-arrow-up text-success"></i> +{{ "%.1f"|format(sales_growth) }}%
+                                {% else %}
+                                <i class="fas fa-arrow-down text-danger"></i> {{ "%.1f"|format(sales_growth) }}%
+                                {% endif %}
+                                vs período anterior
+                            </small>
+                            {% endif %}
                         </div>
                         <div class="align-self-center">
                             <i class="fas fa-dollar-sign fa-2x"></i>
@@ -55,7 +105,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-md-6">
             <div class="card bg-primary text-white">
                 <div class="card-body">
@@ -63,6 +113,16 @@
                         <div>
                             <h4>{{ total_orders }}</h4>
                             <p class="mb-0">Total de Pedidos</p>
+                            {% if prev_total_orders > 0 %}
+                            <small>
+                                {% if orders_growth >= 0 %}
+                                <i class="fas fa-arrow-up text-success"></i> +{{ "%.1f"|format(orders_growth) }}%
+                                {% else %}
+                                <i class="fas fa-arrow-down text-danger"></i> {{ "%.1f"|format(orders_growth) }}%
+                                {% endif %}
+                                vs período anterior
+                            </small>
+                            {% endif %}
                         </div>
                         <div class="align-self-center">
                             <i class="fas fa-shopping-cart fa-2x"></i>
@@ -72,6 +132,59 @@
             </div>
         </div>
     </div>
+
+    <!-- Comparison Section -->
+    {% if prev_total_sales > 0 or prev_total_orders > 0 %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Comparação com Período Anterior</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>Período Atual</h6>
+                                <p class="mb-0"><strong>R$ {{ "%.2f"|format(total_sales) }}</strong></p>
+                                <small class="text-muted">{{ total_orders }} pedidos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>Período Anterior</h6>
+                                <p class="mb-0"><strong>R$ {{ "%.2f"|format(prev_total_sales) }}</strong></p>
+                                <small class="text-muted">{{ prev_total_orders }} pedidos</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>Crescimento Vendas</h6>
+                                <p class="mb-0">
+                                    <strong class="{% if sales_growth >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if sales_growth >= 0 %}+{% endif %}{{ "%.1f"|format(sales_growth) }}%
+                                    </strong>
+                                </p>
+                                <small class="text-muted">R$ {{ "%.2f"|format(total_sales - prev_total_sales) }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h6>Crescimento Pedidos</h6>
+                                <p class="mb-0">
+                                    <strong class="{% if orders_growth >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {% if orders_growth >= 0 %}+{% endif %}{{ "%.1f"|format(orders_growth) }}%
+                                    </strong>
+                                </p>
+                                <small class="text-muted">{{ total_orders - prev_total_orders }} pedidos</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     <div class="row">
         <!-- Daily Sales Chart -->
@@ -115,8 +228,24 @@
     
     <!-- Detailed Orders -->
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="fas fa-list"></i> Detalhamento de Pedidos</h5>
+            <div class="d-flex align-items-center">
+                <small class="text-muted me-3">
+                    Mostrando {{ orders|length }} de {{ total_orders_count }} pedidos
+                </small>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="perPageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ per_page }} por página
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="perPageDropdown">
+                        <li><a class="dropdown-item" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=1, per_page=10) }}">10 por página</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=1, per_page=25) }}">25 por página</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=1, per_page=50) }}">50 por página</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=1, per_page=100) }}">100 por página</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             {% if orders %}
@@ -160,6 +289,80 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <nav aria-label="Navegação de páginas" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <!-- Previous -->
+                    {% if has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=prev_page, per_page=per_page) }}">
+                            <i class="fas fa-chevron-left"></i> Anterior
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link"><i class="fas fa-chevron-left"></i> Anterior</span>
+                    </li>
+                    {% endif %}
+
+                    <!-- Page numbers -->
+                    {% set start_page = [1, page - 2]|max %}
+                    {% set end_page = [total_pages, page + 2]|min %}
+
+                    {% if start_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=1, per_page=per_page) }}">1</a>
+                    </li>
+                    {% if start_page > 2 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+
+                    {% for page_num in range(start_page, end_page + 1) %}
+                    <li class="page-item {% if page_num == page %}active{% endif %}">
+                        <a class="page-link" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=page_num, per_page=per_page) }}">{{ page_num }}</a>
+                    </li>
+                    {% endfor %}
+
+                    {% if end_page < total_pages %}
+                    {% if end_page < total_pages - 1 %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                    {% endif %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=total_pages, per_page=per_page) }}">{{ total_pages }}</a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Next -->
+                    {% if has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('reports.sales', start_date=start_date, end_date=end_date, payment_method=filters.payment_method, customer_id=filters.customer_id, category_id=filters.category_id, page=next_page, per_page=per_page) }}">
+                            Próximo <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Próximo <i class="fas fa-chevron-right"></i></span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <!-- Pagination Info -->
+            <div class="text-center mt-3">
+                <small class="text-muted">
+                    Página {{ page }} de {{ total_pages }} •
+                    Total: {{ total_orders_count }} pedidos
+                </small>
+            </div>
+            {% endif %}
+
             {% else %}
             <div class="text-center py-4">
                 <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
@@ -178,44 +381,53 @@
 const ctx = document.getElementById('dailySalesChart').getContext('2d');
 const dailySales = {{ daily_sales | tojson }};
 
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: dailySales.map(item => {
-            const date = new Date(item.date);
-            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        }),
-        datasets: [{
-            label: 'Vendas (R$)',
-            data: dailySales.map(item => parseFloat(item.total || 0)),
-            backgroundColor: 'rgba(75, 192, 192, 0.8)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    callback: function(value) {
-                        return 'R$ ' + value.toFixed(2);
+if (dailySales && dailySales.length > 0) {
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: dailySales.map(item => {
+                if (item.date) {
+                    const date = new Date(item.date + 'T00:00:00');
+                    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                }
+                return 'N/A';
+            }),
+            datasets: [{
+                label: 'Vendas (R$)',
+                data: dailySales.map(item => parseFloat(item.total || 0)),
+                backgroundColor: 'rgba(75, 192, 192, 0.8)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toFixed(2);
+                        }
                     }
                 }
-            }
-        },
-        plugins: {
-            tooltip: {
-                callbacks: {
-                    label: function(context) {
-                        return 'Vendas: R$ ' + context.parsed.y.toFixed(2);
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Vendas: R$ ' + context.parsed.y.toFixed(2);
+                        }
                     }
                 }
             }
         }
-    }
-});
+    });
+} else {
+    // Show message when no data
+    const chartContainer = document.getElementById('dailySalesChart').parentElement;
+    chartContainer.innerHTML = '<div class="text-center py-4"><i class="fas fa-chart-line fa-3x text-muted mb-3"></i><h5>Sem dados para o período</h5><p class="text-muted">Não há vendas no período selecionado.</p></div>';
+}
 </script>
 {% endblock %}

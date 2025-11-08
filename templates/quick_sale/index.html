@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+
+{% block title %}PDV - Vendas Rápidas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Painel Principal do PDV -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-cash-register"></i> Ponto de Venda</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Campo de Entrada de Código -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="productCode" class="form-label h5">Código do Produto</label>
+                            <div class="input-group input-group-lg">
+                                <input type="text" class="form-control form-control-lg"
+                                       id="productCode" placeholder="Digite o código ou passe o leitor..."
+                                       autocomplete="off" autofocus>
+                                <button class="btn btn-outline-secondary" type="button" id="btnScan">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Digite o SKU do produto ou use o leitor de código de barras
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações do Produto Escaneado -->
+                    <div id="productInfo" class="alert alert-info" style="display: none;">
+                        <h6 id="productName"></h6>
+                        <p class="mb-1">Preço: R$ <span id="productPrice"></span></p>
+                        <p class="mb-1">Estoque: <span id="productStock"></span> unidades</p>
+                        <button class="btn btn-success btn-sm" id="btnAddProduct">
+                            <i class="fas fa-plus"></i> Adicionar à Venda
+                        </button>
+                    </div>
+
+                    <!-- Lista de Itens da Venda -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 style="color: #ecf0f1 !important;">Itens da Venda</h5>
+                            <div id="saleItems" class="border rounded p-3" style="min-height: 200px; max-height: 400px; background-color: #2c3e50; overflow-y: auto; border-color: #34495e !important;">
+                                <div id="itemsList">
+                                    <!-- Itens serão adicionados dinamicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Painel Lateral - Total e Pagamento -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calculator"></i> Total da Venda</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Total -->
+                    <div class="text-center mb-4">
+                        <h2 class="text-success" id="totalAmount">R$ 0,00</h2>
+                        <small class="text-muted" id="itemCount">0 itens</small>
+                    </div>
+
+                    <!-- Formulário de Pagamento -->
+                    <form id="paymentForm">
+                        <div class="mb-3">
+                            <label for="paymentMethod" class="form-label">Forma de Pagamento</label>
+                            <select class="form-select form-select-lg" id="paymentMethod" required>
+                                <option value="">Selecione...</option>
+                                <option value="cash">Dinheiro</option>
+                                <option value="card">Cartão</option>
+                                <option value="pix">PIX</option>
+                                <option value="bank_slip">Boleto</option>
+                            </select>
+                        </div>
+
+                        <!-- Botões de Ação -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg" id="btnFinalize" disabled>
+                                <i class="fas fa-check"></i> Finalizar Venda
+                            </button>
+                            <button type="button" class="btn btn-warning" id="btnClear">
+                                <i class="fas fa-trash"></i> Limpar Venda
+                            </button>
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Voltar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Informações Rápidas -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Atalhos</h6>
+                </div>
+                <div class="card-body">
+                    <small>
+                        <strong>F1:</strong> Finalizar Venda<br>
+                        <strong>F2:</strong> Limpar Venda<br>
+                        <strong>Enter:</strong> Buscar Produto<br>
+                        <strong>ESC:</strong> Limpar Campo
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação de Finalização -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Venda</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Deseja finalizar esta venda?</p>
+                <div id="saleSummary"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmSale">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<style>
+    .sale-item {
+        background-color: transparent !important;
+        color: #ecf0f1 !important;
+        border: none !important;
+        margin-bottom: 12px !important;
+        border-radius: 0 !important;
+        padding: 8px 0 !important;
+        box-shadow: none !important;
+        border-bottom: 1px solid #34495e !important;
+    }
+    .sale-item:last-child {
+        border-bottom: none !important;
+    }
+    .sale-item strong {
+        color: #ecf0f1 !important;
+        font-size: 1.1em !important;
+    }
+    .sale-item .text-muted {
+        color: #bdc3c7 !important;
+        font-size: 0.9em !important;
+    }
+    .sale-item .text-success {
+        color: #2ecc71 !important;
+        font-weight: bold !important;
+    }
+    .sale-item .btn-outline-danger {
+        border-color: #e74c3c !important;
+        color: #e74c3c !important;
+        background: transparent !important;
+    }
+    .sale-item .btn-outline-danger:hover {
+        background-color: #e74c3c !important;
+        color: white !important;
+    }
+    .empty-state {
+        color: #95a5a6 !important;
+        text-align: center;
+        padding: 40px 20px;
+        font-style: italic;
+        opacity: 0.7;
+    }
+</style>
+<script>
+let currentItems = [];
+let currentProduct = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    const productCodeInput = document.getElementById('productCode');
+    const btnScan = document.getElementById('btnScan');
+    const btnAddProduct = document.getElementById('btnAddProduct');
+    const btnFinalize = document.getElementById('btnFinalize');
+    const btnClear = document.getElementById('btnClear');
+    const paymentForm = document.getElementById('paymentForm');
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+
+    // Carregar estado atual da sessão na inicialização
+    loadCurrentSaleState();
+
+    // Focar no campo de código
+    productCodeInput.focus();
+
+    // Event Listeners
+    productCodeInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            scanProduct();
+        }
+    });
+
+    productCodeInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            hideProductInfo();
+        }
+    });
+
+    btnScan.addEventListener('click', scanProduct);
+    btnAddProduct.addEventListener('click', addProductToSale);
+    btnClear.addEventListener('click', clearSale);
+    paymentForm.addEventListener('submit', showConfirmModal);
+
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F1') {
+            e.preventDefault();
+            if (!btnFinalize.disabled) {
+                showConfirmModal(e);
+            }
+        } else if (e.key === 'F2') {
+            e.preventDefault();
+            clearSale();
+        }
+    });
+
+    // Função para obter CSRF token
+    function getCsrfToken() {
+        const token = document.querySelector('meta[name="csrf-token"]');
+        return token ? token.getAttribute('content') : '';
+    }
+
+    // Função auxiliar para fazer requests com CSRF
+    async function csrfFetch(url, options = {}) {
+        const csrfToken = getCsrfToken();
+        const defaultHeaders = {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        };
+
+        const body = options.body ? JSON.parse(options.body) : {};
+        body.csrf_token = csrfToken;
+
+        return fetch(url, {
+            ...options,
+            headers: { ...defaultHeaders, ...options.headers },
+            body: JSON.stringify(body)
+        });
+    }
+
+    // Função para carregar o estado atual da sessão
+    async function loadCurrentSaleState() {
+        try {
+            const response = await csrfFetch('/quick-sale/api/current-state', {
+                method: 'GET'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentItems = data.items || [];
+                updateSaleDisplay(data);
+            } else {
+                // Se não houver dados da sessão, inicializar com estado vazio
+                updateSaleDisplay({ items: [], total: 0, item_count: 0 });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar estado da sessão:', error);
+            // Em caso de erro, inicializar com estado vazio
+            updateSaleDisplay({ items: [], total: 0, item_count: 0 });
+        }
+    }
+
+    // Funções
+    async function scanProduct() {
+        const code = productCodeInput.value.trim();
+        if (!code) return;
+
+        try {
+            const response = await csrfFetch('/quick-sale/api/scan', {
+                method: 'POST',
+                body: JSON.stringify({ code: code })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showProductInfo(data.product);
+            } else {
+                showError(data.message);
+                hideProductInfo();
+            }
+        } catch (error) {
+            showError('Erro ao buscar produto');
+            console.error('Scan error:', error);
+        }
+    }
+
+    function showProductInfo(product) {
+        currentProduct = product;
+        document.getElementById('productName').textContent = product.name;
+        document.getElementById('productPrice').textContent = product.price.toFixed(2);
+        document.getElementById('productStock').textContent = product.stock;
+        document.getElementById('productInfo').style.display = 'block';
+        btnAddProduct.focus();
+    }
+
+    function hideProductInfo() {
+        document.getElementById('productInfo').style.display = 'none';
+        currentProduct = null;
+    }
+
+    async function addProductToSale() {
+        if (!currentProduct) return;
+
+        try {
+            const response = await csrfFetch('/quick-sale/api/add-item', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: currentProduct.id,
+                    quantity: 1
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentItems = data.items;
+                updateSaleDisplay(data);
+                productCodeInput.value = '';
+                hideProductInfo();
+                productCodeInput.focus();
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Erro ao adicionar produto');
+            console.error('Add item error:', error);
+        }
+    }
+
+    function updateSaleDisplay(data) {
+        const itemsList = document.getElementById('itemsList');
+        const totalAmount = document.getElementById('totalAmount');
+        const itemCount = document.getElementById('itemCount');
+
+        if (data.items.length > 0) {
+            itemsList.innerHTML = data.items.slice().reverse().map(item => `
+                <div class="d-flex justify-content-between align-items-center border-bottom py-2 sale-item">
+                    <div>
+                        <strong>${item.product_name}</strong><br>
+                        <small class="text-muted">${item.quantity} x R$ ${item.unit_price.toFixed(2)}</small>
+                    </div>
+                    <div class="text-end">
+                        <strong class="text-success">R$ ${item.total.toFixed(2)}</strong><br>
+                        <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${item.product_id})">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            totalAmount.textContent = `R$ ${data.total.toFixed(2)}`;
+            itemCount.textContent = `${data.item_count} itens`;
+            btnFinalize.disabled = false;
+        } else {
+            itemsList.innerHTML = '<div class="empty-state">Aguardando produtos...</div>';
+            totalAmount.textContent = 'R$ 0,00';
+            itemCount.textContent = '0 itens';
+            btnFinalize.disabled = true;
+        }
+    }
+
+    async function clearSale() {
+        if (!confirm('Deseja limpar todos os itens da venda?')) return;
+
+        try {
+            const response = await csrfFetch('/quick-sale/api/clear-sale', {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentItems = [];
+                updateSaleDisplay({ items: [], total: 0, item_count: 0 });
+                productCodeInput.focus();
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Erro ao limpar venda');
+            console.error('Clear sale error:', error);
+        }
+    }
+
+    function showConfirmModal(e) {
+        e.preventDefault();
+
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        if (!paymentMethod) {
+            showError('Selecione uma forma de pagamento');
+            return;
+        }
+
+        const total = currentItems.reduce((sum, item) => sum + item.total, 0);
+        const itemCount = currentItems.length;
+
+        document.getElementById('saleSummary').innerHTML = `
+            <strong>Total de itens:</strong> ${itemCount}<br>
+            <strong>Valor total:</strong> R$ ${total.toFixed(2)}<br>
+            <strong>Pagamento:</strong> ${getPaymentMethodName(paymentMethod)}
+        `;
+
+        confirmModal.show();
+    }
+
+    document.getElementById('btnConfirmSale').addEventListener('click', async function() {
+        const paymentMethod = document.getElementById('paymentMethod').value;
+
+        try {
+            const response = await csrfFetch('/quick-sale/api/finalize', {
+                method: 'POST',
+                body: JSON.stringify({
+                    payment_method: paymentMethod
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                confirmModal.hide();
+                alert(`Venda finalizada com sucesso!\nNúmero: ${data.sale_number}\nTotal: R$ ${data.total.toFixed(2)}`);
+
+                // Abrir recibo em nova janela
+                window.open(data.receipt_url, '_blank');
+
+                // Limpar venda
+                currentItems = [];
+                updateSaleDisplay({ items: [], total: 0, item_count: 0 });
+                document.getElementById('paymentMethod').value = '';
+                productCodeInput.focus();
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Erro ao finalizar venda');
+            console.error('Finalize error:', error);
+        }
+    });
+
+    // Função global para remover item
+    window.removeItem = async function(productId) {
+        try {
+            const response = await csrfFetch('/quick-sale/api/remove-item', {
+                method: 'POST',
+                body: JSON.stringify({
+                    product_id: productId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                currentItems = data.items;
+                updateSaleDisplay(data);
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Erro ao remover item');
+            console.error('Remove item error:', error);
+        }
+    };
+
+    function getPaymentMethodName(method) {
+        const methods = {
+            'cash': 'Dinheiro',
+            'card': 'Cartão',
+            'pix': 'PIX',
+            'bank_slip': 'Boleto'
+        };
+        return methods[method] || method;
+    }
+
+    function showError(message) {
+        // Usar toast ou alert para mostrar erros
+        alert('Erro: ' + message);
+    }
+});
+</script>
+{% endblock %}

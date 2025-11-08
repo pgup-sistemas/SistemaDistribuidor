@@ -1,0 +1,196 @@
+{% extends "admin_public/base.html" %}
+
+{% block title %}{{ section.name }} - Gerenciamento de Conteúdo{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-{{ section.icon or 'file-alt' }}"></i> {{ section.name }}</h2>
+        <p class="text-muted mb-0">{{ section.description or 'Gerencie o conteúdo desta seção' }}</p>
+    </div>
+    <div>
+        <a href="{{ url_for('admin_public.content_new', section=section.id) }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Conteúdo
+        </a>
+        <a href="{{ url_for('admin_public.content_index') }}" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left"></i> Voltar para Seções
+        </a>
+    </div>
+</div>
+
+<!-- Filtros e Busca -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search"
+                       value="{{ request.args.get('search', '') }}" placeholder="Buscar conteúdo...">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Todos os Status</option>
+                    <option value="published" {% if request.args.get('status') == 'published' %}selected{% endif %}>Publicado</option>
+                    <option value="draft" {% if request.args.get('status') == 'draft' %}selected{% endif %}>Rascunho</option>
+                    <option value="archived" {% if request.args.get('status') == 'archived' %}selected{% endif %}>Arquivado</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="sort" class="form-label">Ordenar Por</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="updated_at" {% if request.args.get('sort', 'updated_at') == 'updated_at' %}selected{% endif %}>Última Atualização</option>
+                    <option value="created_at" {% if request.args.get('sort') == 'created_at' %}selected{% endif %}>Data de Criação</option>
+                    <option value="title" {% if request.args.get('sort') == 'title' %}selected{% endif %}>Título</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-filter"></i> Aplicar Filtros
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Lista de Conteúdo -->
+<div class="card">
+    <div class="card-header">
+        <h5>Itens de Conteúdo ({{ content_items|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if content_items %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Título</th>
+                        <th>Status</th>
+                        <th>Autor</th>
+                        <th>Última Atualização</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in content_items %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.title }}</strong>
+                            {% if item.excerpt %}
+                            <br><small class="text-muted">{{ item.excerpt|truncate(100) }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if item.status == 'published' %}success{% elif item.status == 'draft' %}warning{% else %}secondary{% endif %}">
+                                {{ item.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ item.author_name }}</td>
+                        <td>{{ item.updated_at.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('admin_public.content_edit', id=item.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        {% if item.status == 'draft' %}
+                                        <li>
+                                            <form method="POST" action="{{ url_for('admin_public.content_update', id=item.id) }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="status" value="published" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="fas fa-globe"></i> Publicar
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% elif item.status == 'published' %}
+                                        <li>
+                                            <form method="POST" action="{{ url_for('admin_public.content_update', id=item.id) }}" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <input type="hidden" name="status" value="draft" />
+                                                <button type="submit" class="dropdown-item">
+                                                    <i class="fas fa-eye-slash"></i> Despublicar
+                                                </button>
+                                            </form>
+                                        </li>
+                                        {% endif %}
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="{{ url_for('admin_public.content_delete', id=item.id) }}"
+                                               onclick="return confirm('Tem certeza que deseja excluir este conteúdo?')">
+                                            <i class="fas fa-trash"></i> Excluir
+                                        </a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginação -->
+        {% if pagination %}
+        <nav aria-label="Paginação de conteúdo" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if pagination.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_public.content_section', section=section.id, page=pagination.prev_num, **request.args) }}">
+                        Anterior
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Anterior</span>
+                </li>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages() %}
+                {% if page_num %}
+                <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('admin_public.content_section', section=section.id, page=page_num, **request.args) }}">
+                        {{ page_num }}
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('admin_public.content_section', section=section.id, page=pagination.next_num, **request.args) }}">
+                        Próximo
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link">Próximo</span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+            <h4>Nenhum conteúdo encontrado</h4>
+            <p class="text-muted">Ainda não existem itens de conteúdo nesta seção.</p>
+            <a href="{{ url_for('admin_public.content_new', section=section.id) }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Criar Primeiro Conteúdo
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

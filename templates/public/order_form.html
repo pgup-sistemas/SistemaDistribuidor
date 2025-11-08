@@ -3,55 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fazer Pedido - {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}</title>
-    
+    <title>Fazer Pedido - {% if company_settings %}{{ company_settings.company_name }}{% else %}{{ config.COMPANY_NAME or 'Sistema Distribuidor' }}{% endif %}</title>
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    
-    <style>
-        .product-card {
-            transition: transform 0.2s ease;
-            cursor: pointer;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-2px);
-        }
-        
-        .product-card.selected {
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-        
-        .cart-item {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 10px;
-        }
-        
-        .btn-whatsapp {
-            background-color: #25D366;
-            border-color: #25D366;
-            color: white;
-        }
-        
-        .btn-whatsapp:hover {
-            background-color: #128C7E;
-            border-color: #128C7E;
-            color: white;
-        }
-    </style>
+
+    <!-- CSS Personalizado da Loja -->
+    <link href="{{ url_for('static', filename='css/store.css') }}" rel="stylesheet">
 </head>
 <body>
     <!-- Header -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-custom">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('public.index') }}">
-                <i class="fas fa-store"></i> {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}
+                <i class="fas fa-store"></i>
+                {% if company_settings %}
+                    {{ company_settings.company_name }}
+                {% else %}
+                    {{ config.COMPANY_NAME or 'Sistema Distribuidor' }}
+                {% endif %}
             </a>
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" href="{{ url_for('public.index') }}">
@@ -65,13 +38,19 @@
     </nav>
 
     <div class="container my-5">
+        <!-- Cabeçalho -->
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold text-primary-custom">
+                <i class="fas fa-shopping-cart"></i> Faça Seu Pedido
+            </h1>
+            <p class="lead text-muted">
+                Escolha os produtos, preencha seus dados e receba confirmação via WhatsApp!
+            </p>
+        </div>
+
         <div class="row">
             <!-- Produtos -->
             <div class="col-lg-8">
-                <h2 class="mb-4">
-                    <i class="fas fa-shopping-cart"></i> Faça Seu Pedido
-                </h2>
-                
                 <!-- Filtros -->
                 <div class="row mb-4">
                     <div class="col-md-6">
@@ -84,38 +63,48 @@
                         </select>
                     </div>
                 </div>
-                
+
                 <!-- Lista de Produtos -->
-                <div class="row" id="productsList">
+                <div class="row g-3" id="productsList">
                     <!-- Produtos serão carregados via JavaScript -->
                 </div>
             </div>
-            
-            <!-- Carrinho -->
+
+            <!-- Carrinho Lateral -->
             <div class="col-lg-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-shopping-bag"></i> Seu Pedido
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div id="cartItems">
-                            <p class="text-muted text-center">Nenhum item adicionado</p>
+                <div class="cart-sidebar">
+                    <div class="card">
+                        <div class="card-header bg-primary-custom text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-shopping-bag"></i> Seu Pedido
+                            </h5>
                         </div>
-                        
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <strong>Total:</strong>
-                            <strong id="cartTotal">R$ 0,00</strong>
+                        <div class="card-body">
+                            <div id="cartItems">
+                                <div class="text-center py-4">
+                                    <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0">Nenhum item adicionado</p>
+                                    <small class="text-muted">Clique nos produtos para adicionar</small>
+                                </div>
+                            </div>
+
+                            <div class="cart-total">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong>Total:</strong>
+                                    <strong id="cartTotal" class="text-primary-custom">R$ 0,00</strong>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mt-3">
+                                <button type="button" class="btn btn-primary-custom" onclick="proceedToCheckout()" disabled id="checkoutBtn">
+                                    <i class="fas fa-credit-card"></i> Finalizar Pedido
+                                </button>
+
+                                <a href="{{ url_for('public.menu') }}" class="btn btn-outline-primary-custom">
+                                    <i class="fas fa-list"></i> Ver Cardápio Completo
+                                </a>
+                            </div>
                         </div>
-                        
-                        <button type="button" class="btn btn-primary w-100 mb-3" onclick="proceedToCheckout()" disabled id="checkoutBtn">
-                            <i class="fas fa-credit-card"></i> Finalizar Pedido
-                        </button>
-                        
-                        <a href="{{ url_for('public.menu') }}" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-list"></i> Ver Cardápio Completo
-                        </a>
                     </div>
                 </div>
             </div>
@@ -124,83 +113,108 @@
 
     <!-- Modal de Finalização -->
     <div class="modal fade" id="checkoutModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary-custom text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-shopping-cart"></i> Finalizar Pedido
+                        <i class="fas fa-shopping-cart"></i> Finalizar Seu Pedido
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="checkoutForm" method="POST" action="{{ url_for('public.create_order') }}">
                     <div class="modal-body">
-                        <!-- Dados do Cliente -->
-                        <h6 class="fw-bold mb-3">Dados do Cliente</h6>
-                        <div class="row g-3 mb-4">
+                        <div class="row">
+                            <!-- Resumo do Pedido -->
                             <div class="col-md-6">
-                                <label for="customer_name" class="form-label">Nome Completo *</label>
-                                <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                                <h6 class="fw-bold mb-3 text-primary-custom">
+                                    <i class="fas fa-list"></i> Resumo do Pedido
+                                </h6>
+                                <div id="orderSummary" class="alert alert-primary-custom">
+                                    <!-- Resumo será preenchido via JavaScript -->
+                                </div>
                             </div>
+
+                            <!-- Dados do Cliente -->
                             <div class="col-md-6">
-                                <label for="customer_phone" class="form-label">Telefone/WhatsApp *</label>
-                                <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="customer_email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="customer_email" name="customer_email">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="customer_cep" class="form-label">CEP</label>
-                                <input type="text" class="form-control" id="customer_cep" name="customer_cep">
-                            </div>
-                            <div class="col-12">
-                                <label for="customer_address" class="form-label">Endereço</label>
-                                <input type="text" class="form-control" id="customer_address" name="customer_address">
-                            </div>
-                            <div class="col-md-6">
-                                <label for="customer_neighborhood" class="form-label">Bairro</label>
-                                <input type="text" class="form-control" id="customer_neighborhood" name="customer_neighborhood">
-                            </div>
-                            <div class="col-md-4">
-                                <label for="customer_city" class="form-label">Cidade</label>
-                                <input type="text" class="form-control" id="customer_city" name="customer_city">
-                            </div>
-                            <div class="col-md-2">
-                                <label for="customer_state" class="form-label">UF</label>
-                                <input type="text" class="form-control" id="customer_state" name="customer_state" maxlength="2">
+                                <h6 class="fw-bold mb-3 text-primary-custom">
+                                    <i class="fas fa-user"></i> Seus Dados
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="customer_name" class="form-label">Nome Completo *</label>
+                                        <input type="text" class="form-control" id="customer_name" name="customer_name" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="customer_phone" class="form-label">Telefone/WhatsApp *</label>
+                                        <input type="tel" class="form-control" id="customer_phone" name="customer_phone" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="customer_email" class="form-label">Email (opcional)</label>
+                                        <input type="email" class="form-control" id="customer_email" name="customer_email">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Método de Pagamento -->
-                        <h6 class="fw-bold mb-3">Método de Pagamento</h6>
-                        <div class="row g-3 mb-4">
-                            <div class="col-12">
-                                <select class="form-select" id="payment_method" name="payment_method" required>
-                                    <option value="">Selecionar método</option>
-                                    <option value="cash">💵 Dinheiro</option>
-                                    <option value="card">💳 Cartão</option>
-                                    <option value="pix">📱 PIX</option>
-                                    <option value="bank_slip">📄 Boleto</option>
-                                    <option value="mercadopago">💳 MercadoPago (Online)</option>
-                                </select>
+
+                        <hr class="my-4">
+
+                        <!-- Endereço e Pagamento -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3 text-primary-custom">
+                                    <i class="fas fa-map-marker-alt"></i> Endereço de Entrega
+                                </h6>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="customer_cep" class="form-label">CEP</label>
+                                        <input type="text" class="form-control" id="customer_cep" name="customer_cep">
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="customer_address" class="form-label">Endereço</label>
+                                        <input type="text" class="form-control" id="customer_address" name="customer_address">
+                                    </div>
+                                    <div class="col-8">
+                                        <label for="customer_neighborhood" class="form-label">Bairro</label>
+                                        <input type="text" class="form-control" id="customer_neighborhood" name="customer_neighborhood">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="customer_city" class="form-label">Cidade</label>
+                                        <input type="text" class="form-control" id="customer_city" name="customer_city">
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12">
-                                <label for="notes" class="form-label">Observações</label>
-                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Observações sobre o pedido..."></textarea>
+
+                            <div class="col-md-6">
+                                <h6 class="fw-bold mb-3 text-primary-custom">
+                                    <i class="fas fa-credit-card"></i> Forma de Pagamento
+                                </h6>
+                                <div class="mb-3">
+                                    <select class="form-select form-select-lg" id="payment_method" name="payment_method" required>
+                                        <option value="">Selecione como vai pagar</option>
+                                        <option value="cash">💵 Dinheiro</option>
+                                        <option value="card">💳 Cartão (na entrega)</option>
+                                        <option value="pix">📱 PIX</option>
+                                        <option value="bank_slip">📄 Boleto</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="notes" class="form-label">
+                                        <i class="fas fa-sticky-note"></i> Observações (opcional)
+                                    </label>
+                                    <textarea class="form-control" id="notes" name="notes" rows="3"
+                                              placeholder="Ex: Sem cebola, entregar na portaria..."></textarea>
+                                </div>
                             </div>
                         </div>
-                        
-                        <!-- Resumo do Pedido -->
-                        <h6 class="fw-bold mb-3">Resumo do Pedido</h6>
-                        <div id="orderSummary">
-                            <!-- Resumo será preenchido via JavaScript -->
-                        </div>
-                        
+
                         <input type="hidden" id="items" name="items">
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-whatsapp">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-arrow-left"></i> Voltar
+                        </button>
+                        <button type="submit" class="btn btn-whatsapp btn-lg">
                             <i class="fab fa-whatsapp"></i> Confirmar Pedido
                         </button>
                     </div>
@@ -355,7 +369,7 @@
             cart.forEach(item => {
                 const itemTotal = (item.unit_price * item.quantity) - item.discount;
                 total += itemTotal;
-                
+
                 html += `
                     <div class="cart-item">
                         <div class="d-flex justify-content-between align-items-start mb-2">
@@ -370,7 +384,7 @@
                                 <input type="number" class="form-control text-center" value="${item.quantity}" min="1" onchange="updateQuantity(${item.product_id}, parseInt(this.value))">
                                 <button class="btn btn-outline-secondary" type="button" onclick="updateQuantity(${item.product_id}, ${item.quantity + 1})">+</button>
                             </div>
-                            <span class="fw-bold">R$ ${itemTotal.toFixed(2)}</span>
+                            <span class="fw-bold text-primary-custom">R$ ${itemTotal.toFixed(2)}</span>
                         </div>
                     </div>
                 `;
@@ -394,17 +408,17 @@
                 const itemTotal = (item.unit_price * item.quantity) - item.discount;
                 total += itemTotal;
                 summaryHtml += `
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between py-1">
                         <span>${item.quantity}x ${item.name}</span>
-                        <span>R$ ${itemTotal.toFixed(2)}</span>
+                        <span class="fw-bold">R$ ${itemTotal.toFixed(2)}</span>
                     </div>
                 `;
             });
-            
+
             summaryHtml += `
-                <hr>
-                <div class="d-flex justify-content-between fw-bold">
-                    <span>Total:</span>
+                <hr class="my-2">
+                <div class="d-flex justify-content-between fw-bold fs-5 text-primary-custom">
+                    <span>TOTAL DO PEDIDO:</span>
                     <span>R$ ${total.toFixed(2)}</span>
                 </div>
             `;

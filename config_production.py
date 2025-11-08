@@ -13,6 +13,15 @@ class ProductionConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     if not SQLALCHEMY_DATABASE_URI:
         raise ValueError("DATABASE_URL environment variable must be set in production")
+
+    # Configurações específicas do PostgreSQL para produção
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,  # Verificar conexão antes de usar
+        "pool_recycle": 300,    # Reciclar conexões a cada 5 minutos
+        "pool_size": 10,        # Tamanho do pool de conexões
+        "max_overflow": 20,     # Máximo de conexões extras
+        "pool_timeout": 30,     # Timeout para obter conexão do pool
+    }
     
     # Email
     MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
@@ -91,7 +100,7 @@ class ProductionConfig(Config):
                 import sentry_sdk
                 from sentry_sdk.integrations.flask import FlaskIntegration
                 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
-                
+
                 sentry_sdk.init(
                     dsn=ProductionConfig.SENTRY_DSN,
                     integrations=[
@@ -99,8 +108,14 @@ class ProductionConfig(Config):
                         SqlalchemyIntegration(),
                     ],
                     traces_sample_rate=0.1,
-                    environment='production'
+                    environment='production',
+                    # Configurações adicionais para melhor rastreamento
+                    send_default_pii=False,  # Não enviar dados pessoais por padrão
+                    before_send=lambda event, hint: event,  # Hook para processamento de eventos
+                    release=os.environ.get('APP_VERSION', '1.0.0'),  # Versão da aplicação
+                    server_name=os.environ.get('SERVER_NAME', 'production-server')  # Nome do servidor
                 )
+                app.logger.info('Sentry monitoring configured successfully')
             except ImportError:
                 app.logger.warning('Sentry não instalado. Instale com: pip install sentry-sdk[flask]')
         
@@ -111,5 +126,7 @@ class ProductionConfig(Config):
             response.headers['X-Frame-Options'] = 'DENY'
             response.headers['X-XSS-Protection'] = '1; mode=block'
             response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-            response.headers['Content-Security-Policy'] = "default-src 'self'"
+            response.headers['Content-Security-Policy'] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;"
+            response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+            response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
             return response

@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+
+{% block title %}Inventário com Scanner - Sistema Distribuidor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h4 class="mb-0"><i class="fas fa-barcode"></i> Inventário com Scanner</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Campo de Scanner -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="skuScanner" class="form-label h5">Scanner de Código de Barras</label>
+                            <div class="input-group input-group-lg">
+                                <input type="text" class="form-control form-control-lg"
+                                       id="skuScanner" placeholder="Passe o código de barras..."
+                                       autocomplete="off" autofocus>
+                                <button class="btn btn-outline-primary" type="button" id="btnSearch">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                            <div class="form-text">
+                                Passe o leitor de código de barras ou digite o SKU manualmente
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Informações do Produto -->
+                    <div id="productInfo" class="card mb-4" style="display: none;">
+                        <div class="card-header">
+                            <h6 class="mb-0" id="productTitle">Produto Encontrado</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 id="productName"></h5>
+                                    <p class="mb-1"><strong>SKU:</strong> <code id="productSku"></code></p>
+                                    <p class="mb-1"><strong>Categoria:</strong> <span id="productCategory"></span></p>
+                                    <p class="mb-1"><strong>Unidade:</strong> <span id="productUnit"></span></p>
+                                </div>
+                                <div class="col-md-4 text-center">
+                                    <div class="mb-3">
+                                        <h6>Estoque Atual</h6>
+                                        <h3 class="text-primary" id="currentStock">0</h3>
+                                        <small class="text-muted">Estoque mínimo: <span id="minStock">0</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Formulário de Atualização -->
+                    <div id="updateForm" style="display: none;">
+                        <div class="card border-success">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0"><i class="fas fa-edit"></i> Atualizar Quantidade</h6>
+                            </div>
+                            <div class="card-body">
+                                <form id="inventoryForm">
+                                    <input type="hidden" id="productId" name="product_id">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="newQuantity" class="form-label">Nova Quantidade</label>
+                                                <input type="number" class="form-control form-control-lg"
+                                                       id="newQuantity" name="quantity" min="0" required>
+                                                <div class="form-text" id="quantityHelp"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="updateReason" class="form-label">Motivo da Atualização</label>
+                                                <select class="form-select" id="updateReason" name="reason">
+                                                    <option value="Ajuste de inventário via scanner">Ajuste de inventário via scanner</option>
+                                                    <option value="Contagem física">Contagem física</option>
+                                                    <option value="Correção de erro">Correção de erro</option>
+                                                    <option value="Perda/avaria">Perda/avaria</option>
+                                                    <option value="Outro">Outro</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <button type="button" class="btn btn-secondary" id="btnCancel">
+                                            <i class="fas fa-times"></i> Cancelar
+                                        </button>
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="fas fa-save"></i> Atualizar Estoque
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Histórico de Atualizações -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-history"></i> Últimas Atualizações</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentUpdates" class="list-group list-group-flush">
+                                <div class="list-group-item text-center text-muted">
+                                    <i class="fas fa-info-circle"></i> Nenhuma atualização recente
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Confirmação -->
+<div class="modal fade" id="confirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Atualização</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Deseja atualizar o estoque deste produto?</p>
+                <div id="confirmDetails"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="btnConfirmUpdate">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let currentProduct = null;
+let recentUpdates = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+    const skuScanner = document.getElementById('skuScanner');
+    const btnSearch = document.getElementById('btnSearch');
+    const inventoryForm = document.getElementById('inventoryForm');
+    const btnCancel = document.getElementById('btnCancel');
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+
+    // Focar no campo de scanner
+    skuScanner.focus();
+
+    // Event Listeners
+    skuScanner.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            searchProduct();
+        }
+    });
+
+    skuScanner.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            this.value = '';
+            hideProductInfo();
+        }
+    });
+
+    btnSearch.addEventListener('click', searchProduct);
+    btnCancel.addEventListener('click', hideProductInfo);
+    inventoryForm.addEventListener('submit', showConfirmModal);
+
+    // Funções
+    async function searchProduct() {
+        const sku = skuScanner.value.trim().toUpperCase();
+        if (!sku) return;
+
+        try {
+            const response = await fetch('/stock/api/inventory-scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ sku: sku })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showProductInfo(data.product);
+            } else {
+                showError(data.message);
+                hideProductInfo();
+            }
+        } catch (error) {
+            showError('Erro ao buscar produto');
+            console.error('Search error:', error);
+        }
+    }
+
+    function showProductInfo(product) {
+        currentProduct = product;
+
+        document.getElementById('productTitle').textContent = `Produto: ${product.name}`;
+        document.getElementById('productName').textContent = product.name;
+        document.getElementById('productSku').textContent = product.sku;
+        document.getElementById('productCategory').textContent = product.category || 'N/A';
+        document.getElementById('productUnit').textContent = product.unit;
+        document.getElementById('currentStock').textContent = product.current_stock;
+        document.getElementById('minStock').textContent = product.minimum_stock;
+
+        document.getElementById('productInfo').style.display = 'block';
+        document.getElementById('updateForm').style.display = 'block';
+
+        // Preencher formulário
+        document.getElementById('productId').value = product.id;
+        document.getElementById('newQuantity').value = product.current_stock;
+
+        // Focar no campo de quantidade
+        document.getElementById('newQuantity').focus();
+        document.getElementById('newQuantity').select();
+
+        updateQuantityHelp(product.current_stock);
+    }
+
+    function hideProductInfo() {
+        document.getElementById('productInfo').style.display = 'none';
+        document.getElementById('updateForm').style.display = 'none';
+        currentProduct = null;
+        skuScanner.value = '';
+        skuScanner.focus();
+    }
+
+    function updateQuantityHelp(currentStock) {
+        const helpText = document.getElementById('quantityHelp');
+        const newQuantity = parseInt(document.getElementById('newQuantity').value) || 0;
+        const difference = newQuantity - currentStock;
+
+        if (difference > 0) {
+            helpText.innerHTML = `<span class="text-success">+${difference} unidades (entrada)</span>`;
+        } else if (difference < 0) {
+            helpText.innerHTML = `<span class="text-danger">${difference} unidades (saída)</span>`;
+        } else {
+            helpText.innerHTML = `<span class="text-muted">Sem alteração</span>`;
+        }
+    }
+
+    // Atualizar ajuda quando quantidade muda
+    document.getElementById('newQuantity').addEventListener('input', function() {
+        if (currentProduct) {
+            updateQuantityHelp(currentProduct.current_stock);
+        }
+    });
+
+    function showConfirmModal(e) {
+        e.preventDefault();
+
+        const newQuantity = parseInt(document.getElementById('newQuantity').value);
+        const reason = document.getElementById('updateReason').value;
+        const difference = newQuantity - currentProduct.current_stock;
+
+        document.getElementById('confirmDetails').innerHTML = `
+            <strong>Produto:</strong> ${currentProduct.name}<br>
+            <strong>Estoque atual:</strong> ${currentProduct.current_stock} ${currentProduct.unit}<br>
+            <strong>Novo estoque:</strong> ${newQuantity} ${currentProduct.unit}<br>
+            <strong>Diferença:</strong> <span class="${difference >= 0 ? 'text-success' : 'text-danger'}">${difference > 0 ? '+' : ''}${difference} ${currentProduct.unit}</span><br>
+            <strong>Motivo:</strong> ${reason}
+        `;
+
+        confirmModal.show();
+    }
+
+    document.getElementById('btnConfirmUpdate').addEventListener('click', async function() {
+        const productId = document.getElementById('productId').value;
+        const newQuantity = document.getElementById('newQuantity').value;
+        const reason = document.getElementById('updateReason').value;
+
+        try {
+            const response = await fetch('/stock/api/inventory-update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    product_id: parseInt(productId),
+                    quantity: parseInt(newQuantity),
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showSuccess(data.message);
+                addRecentUpdate(data.product, newQuantity);
+                hideProductInfo();
+                confirmModal.hide();
+            } else {
+                showError(data.message);
+            }
+        } catch (error) {
+            showError('Erro ao atualizar inventário');
+            console.error('Update error:', error);
+        }
+    });
+
+    function addRecentUpdate(product, newQuantity) {
+        const update = {
+            product: product.name,
+            oldStock: currentProduct.current_stock,
+            newStock: newQuantity,
+            unit: product.unit,
+            timestamp: new Date().toLocaleTimeString()
+        };
+
+        recentUpdates.unshift(update);
+        if (recentUpdates.length > 10) {
+            recentUpdates.pop();
+        }
+
+        updateRecentUpdatesList();
+    }
+
+    function updateRecentUpdatesList() {
+        const container = document.getElementById('recentUpdates');
+
+        if (recentUpdates.length === 0) {
+            container.innerHTML = '<div class="list-group-item text-center text-muted"><i class="fas fa-info-circle"></i> Nenhuma atualização recente</div>';
+            return;
+        }
+
+        container.innerHTML = recentUpdates.map(update => `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${update.product}</strong><br>
+                        <small class="text-muted">
+                            ${update.oldStock} → ${update.newStock} ${update.unit}
+                        </small>
+                    </div>
+                    <small class="text-muted">${update.timestamp}</small>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function showError(message) {
+        // Criar toast de erro
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+
+    function showSuccess(message) {
+        // Criar toast de sucesso
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            <i class="fas fa-check-circle"></i> ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.remove();
+        }, 5000);
+    }
+});
+</script>
+{% endblock %}

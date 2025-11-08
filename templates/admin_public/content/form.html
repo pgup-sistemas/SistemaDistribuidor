@@ -1,0 +1,236 @@
+{% extends "admin_public/base.html" %}
+
+{% block title %}{% if content %}Editar{% else %}Criar{% endif %} Conteúdo{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-edit"></i> {% if content %}Editar{% else %}Criar{% endif %} Conteúdo</h2>
+    <div>
+        <a href="{{ url_for('admin_public.content_section', section=section.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </a>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin_public.content_create', section=section.id) }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    {% if content %}
+    <input type="hidden" name="content_id" value="{{ content.id }}"/>
+    {% endif %}
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-file-alt"></i> Detalhes do Conteúdo</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="title" name="title"
+                               value="{{ content.title if content else '' }}" required maxlength="200">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="slug" class="form-label">URL Amigável</label>
+                        <input type="text" class="form-control" id="slug" name="slug"
+                               value="{{ content.slug if content else '' }}" maxlength="200">
+                        <div class="form-text">Deixe em branco para gerar automaticamente do título</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="excerpt" class="form-label">Resumo</label>
+                        <textarea class="form-control" id="excerpt" name="excerpt" rows="3"
+                                  maxlength="500">{{ content.excerpt if content else '' }}</textarea>
+                        <div class="form-text">Breve descrição para prévias e SEO</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Conteúdo <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="content" name="content" rows="15" required>{{ content.content if content else '' }}</textarea>
+                        <div class="form-text">Use HTML para formatação</div>
+                    </div>
+
+                    <!-- Campos SEO -->
+                    <div class="mb-3">
+                        <label for="meta_title" class="form-label">Título Meta</label>
+                        <input type="text" class="form-control" id="meta_title" name="meta_title"
+                               value="{{ content.meta_title if content else '' }}" maxlength="60">
+                        <div class="form-text">Título SEO (máximo 60 caracteres)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="meta_description" class="form-label">Descrição Meta</label>
+                        <textarea class="form-control" id="meta_description" name="meta_description" rows="2"
+                                  maxlength="160">{{ content.meta_description if content else '' }}</textarea>
+                        <div class="form-text">Descrição SEO (máximo 160 caracteres)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Status e Configurações -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-cog"></i> Configurações</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="draft" {% if content and content.status == 'draft' %}selected{% endif %}>Rascunho</option>
+                            <option value="published" {% if content and content.status == 'published' %}selected{% endif %}>Publicado</option>
+                            <option value="archived" {% if content and content.status == 'archived' %}selected{% endif %}>Arquivado</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="publish_date" class="form-label">Data de Publicação</label>
+                        <input type="datetime-local" class="form-control" id="publish_date" name="publish_date"
+                               value="{{ content.publish_date.strftime('%Y-%m-%dT%H:%M') if content and content.publish_date else '' }}">
+                        <div class="form-text">Deixe em branco para publicação imediata</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="author_id" class="form-label">Autor</label>
+                        <select class="form-select" id="author_id" name="author_id">
+                            {% for user in users %}
+                            <option value="{{ user.id }}" {% if content and content.author_id == user.id %}selected{% endif %}>
+                                {{ user.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="featured" name="featured"
+                               {% if content and content.featured %}checked{% endif %}>
+                        <label class="form-check-label" for="featured">
+                            Conteúdo Destacado
+                        </label>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="allow_comments" name="allow_comments"
+                               {% if content and content.allow_comments %}checked{% endif %}>
+                        <label class="form-check-label" for="allow_comments">
+                            Permitir Comentários
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imagem Destacada -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-image"></i> Imagem Destacada</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="featured_image" name="featured_image" accept="image/*">
+                        <div class="form-text">Envie uma imagem destacada</div>
+                    </div>
+
+                    {% if content and content.featured_image_url %}
+                    <div class="mb-3">
+                        <img src="{{ content.featured_image_url }}" alt="Imagem Destacada" class="img-fluid rounded">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="remove_featured_image" name="remove_featured_image">
+                            <label class="form-check-label" for="remove_featured_image">
+                                Remover imagem atual
+                            </label>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label for="featured_image_alt" class="form-label">Texto Alternativo</label>
+                        <input type="text" class="form-control" id="featured_image_alt" name="featured_image_alt"
+                               value="{{ content.featured_image_alt if content else '' }}" maxlength="200">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories/Tags -->
+            {% if section.supports_categories %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-tags"></i> Categorias e Tags</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="categories" class="form-label">Categorias</label>
+                        <select class="form-select" id="categories" name="categories" multiple>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}"
+                                    {% if content and category.id in content.category_ids %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="tags" class="form-label">Tags</label>
+                        <input type="text" class="form-control" id="tags" name="tags"
+                               value="{{ content.tags|join(', ') if content and content.tags else '' }}"
+                               placeholder="tag1, tag2, tag3">
+                        <div class="form-text">Separe as tags com vírgulas</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="text-center">
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="fas fa-save"></i> {% if content %}Atualizar{% else %}Criar{% endif %} Conteúdo
+        </button>
+        <a href="{{ url_for('admin_public.content_section', section=section.id) }}" class="btn btn-secondary btn-lg ms-2">
+            <i class="fas fa-times"></i> Cancelar
+        </a>
+    </div>
+</form>
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gera URL amigável a partir do título
+    const titleInput = document.getElementById('title');
+    const slugInput = document.getElementById('slug');
+    const metaTitle = document.getElementById('meta_title');
+    const metaDesc = document.getElementById('meta_description');
+
+    if (titleInput && slugInput) {
+        titleInput.addEventListener('input', function() {
+            if (!slugInput.value) {
+                slugInput.value = this.value.toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^\w\s-]/g, '')
+                    .replace(/[\s_-]+/g, '-')
+                    .replace(/^-+|-+$/g, '');
+            }
+        });
+    }
+
+    // Contadores de caracteres para campos SEO
+    if (metaTitle) {
+        metaTitle.addEventListener('input', function() {
+            this.nextElementSibling.textContent = `Título SEO (${this.value.length}/60 caracteres)`;
+        });
+    }
+
+    if (metaDesc) {
+        metaDesc.addEventListener('input', function() {
+            this.nextElementSibling.textContent = `Descrição SEO (${this.value.length}/160 caracteres)`;
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

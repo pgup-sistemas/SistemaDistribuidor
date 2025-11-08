@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from models import Order, db
-from services.mercadopago_service import MercadoPagoService
+from services.payment_factory import PaymentGatewayFactory
 import logging
 
 # Get CSRF instance to allow exemptions
@@ -27,11 +27,11 @@ def create_payment(order_id):
             flash('Este pedido já possui um pagamento processado.', 'warning')
             return redirect(url_for('orders.view', id=order_id))
         
-        # Criar serviço MercadoPago
-        mp_service = MercadoPagoService()
+        # Criar serviço de pagamento
+        payment_service = PaymentGatewayFactory.create()
         
         # Criar preferência de pagamento
-        result = mp_service.create_preference(order)
+        result = payment_service.create_preference(order)
         
         if result['success']:
             # Salvar preference_id no pedido
@@ -111,8 +111,8 @@ def webhook():
             return jsonify({'error': 'No data received'}), 400
         
         # Processar notificação
-        mp_service = MercadoPagoService()
-        result = mp_service.process_webhook(notification_data)
+        payment_service = PaymentGatewayFactory.create()
+        result = payment_service.process_webhook(notification_data)
         
         if result['success']:
             return jsonify({'status': 'ok'}), 200
@@ -138,9 +138,9 @@ def payment_status(order_id):
         if not order.payment_id:
             return jsonify({'error': 'No payment found'}), 404
         
-        # Buscar informações do pagamento no MercadoPago
-        mp_service = MercadoPagoService()
-        result = mp_service.get_payment_info(order.payment_id)
+        # Buscar informações do pagamento
+        payment_service = PaymentGatewayFactory.create()
+        result = payment_service.get_payment_info(order.payment_id)
         
         if result['success']:
             payment = result['payment']

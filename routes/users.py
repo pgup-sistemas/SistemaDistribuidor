@@ -1,7 +1,24 @@
+import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from models import User, db
+
+def validate_password(password):
+    """Validate password strength"""
+    if len(password) < 8:
+        return False, "Senha deve ter pelo menos 8 caracteres."
+
+    if not re.search(r'[A-Z]', password):
+        return False, "Senha deve conter pelo menos uma letra maiúscula."
+
+    if not re.search(r'[a-z]', password):
+        return False, "Senha deve conter pelo menos uma letra minúscula."
+
+    if not re.search(r'[0-9]', password):
+        return False, "Senha deve conter pelo menos um número."
+
+    return True, "Senha válida."
 
 users_bp = Blueprint('users', __name__)
 
@@ -23,36 +40,58 @@ def new():
         return redirect(url_for('dashboard.index'))
     
     if request.method == 'POST':
-        name = request.form.get('name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
-        
-        if not all([name, email, password, role]):
-            flash('Todos os campos são obrigatórios.', 'error')
-            return render_template('users/form.html')
-        
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        role = request.form.get('role', '')
+
+        # Validation
+        errors = []
+
+        if not name or len(name) < 2:
+            errors.append('Nome deve ter pelo menos 2 caracteres.')
+
+        if not email:
+            errors.append('Email é obrigatório.')
+        elif not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', email):
+            errors.append('Email inválido.')
+
+        if not password:
+            errors.append('Senha é obrigatória.')
+        else:
+            is_valid, msg = validate_password(password)
+            if not is_valid:
+                errors.append(msg)
+
         if role not in ['admin', 'attendant', 'stock_manager', 'delivery', 'manager']:
-            flash('Função inválida.', 'error')
+            errors.append('Função inválida.')
+
+        if errors:
+            for error in errors:
+                flash(error, 'error')
             return render_template('users/form.html')
-        
+
         # Check if email already exists
         if User.query.filter_by(email=email, active=True).first():
             flash('Email já está em uso.', 'error')
             return render_template('users/form.html')
-        
+
         user = User(
             name=name,
             email=email,
             password_hash=generate_password_hash(password),
             role=role
         )
-        
-        db.session.add(user)
-        db.session.commit()
-        
-        flash('Usuário criado com sucesso!', 'success')
-        return redirect(url_for('users.index'))
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+            flash('Usuário criado com sucesso!', 'success')
+            return redirect(url_for('users.index'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao criar usuário. Tente novamente.', 'error')
+            return render_template('users/form.html')
     
     return render_template('users/form.html')
 

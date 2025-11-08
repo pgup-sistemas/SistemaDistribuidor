@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
@@ -9,8 +10,8 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from markupsafe import Markup
 from services.logging_service import logging_service
-import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -24,17 +25,16 @@ csrf = CSRFProtect()
 mail = Mail()
 limiter = Limiter(
     key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"]
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://"
 )
 
 def create_app():
     app = Flask(__name__)
 
     # Configuration
-    app.secret_key = os.environ.get("SESSION_SECRET")
-    if not app.secret_key:
-        raise ValueError("SESSION_SECRET environment variable is required and cannot be empty")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+    app.secret_key = os.environ.get("SESSION_SECRET") or "MFKlGunyCTcnwoCPrTO83-VOSgLBBF2OdN2WI4KTOTaim4dcG0qp1x6MflntEEzDRvU"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL") or "sqlite:///distributor_system.db"
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
         "pool_recycle": 300,
         "pool_pre_ping": True,
@@ -42,7 +42,7 @@ def create_app():
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Secure session cookie configuration
-    app.config["SESSION_COOKIE_SECURE"] = True  # Only send over HTTPS
+    app.config["SESSION_COOKIE_SECURE"] = os.environ.get("FLASK_ENV") == "production"  # HTTPS only in production
     app.config["SESSION_COOKIE_HTTPONLY"] = True  # Prevent XSS access to session cookie
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"  # CSRF protection
     app.config["PERMANENT_SESSION_LIFETIME"] = 3600  # 1 hour session timeout
@@ -50,10 +50,29 @@ def create_app():
     # Middleware
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+    # HTTPS enforcement em produção
+    if os.environ.get('FLASK_ENV') == 'production':
+        try:
+            from werkzeug.middleware.https_fix import HTTPSRedirectMiddleware
+            app.wsgi_app = HTTPSRedirectMiddleware(app.wsgi_app)
+        except ImportError:
+            # Fallback for older werkzeug versions
+            pass
+
     # Initialize extensions
     db.init_app(app)
     login_manager.init_app(app)
     csrf.init_app(app)
+    # Mail configuration (read from environment)
+    app.config['MAIL_SERVER'] = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    app.config['MAIL_PORT'] = int(os.environ.get('MAIL_PORT') or 587)
+    app.config['MAIL_USE_TLS'] = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    app.config['MAIL_USE_SSL'] = os.environ.get('MAIL_USE_SSL', 'false').lower() in ['true', 'on', '1']
+    app.config['MAIL_USERNAME'] = os.environ.get('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD')
+    app.config['MAIL_DEFAULT_SENDER'] = os.environ.get('MAIL_DEFAULT_SENDER') or 'noreply@distribuidor.com'
+    app.config['MAIL_SUPPRESS_SEND'] = os.environ.get('MAIL_SUPPRESS_SEND', 'false').lower() in ['true', 'on', '1']
+
     mail.init_app(app)
     limiter.init_app(app)
     logging_service.init_app(app)
@@ -67,7 +86,6 @@ def create_app():
         """Convert newlines to HTML <br> tags"""
         if not text:
             return ''
-        from markupsafe import Markup
         # Replace \r\n, \r, and \n with <br>
         result = re.sub(r'\r\n|\r|\n', '<br>', str(text))
         return Markup(result)
@@ -106,6 +124,9 @@ def create_app():
     from routes.payments import payments_bp
     from routes.delivery import delivery_bp
     from routes.public import public_bp
+    from routes.quick_sale import quick_sale_bp
+    from routes.nfe_integration import nfe_bp
+    from routes.admin_public import admin_public_bp
 
     app.register_blueprint(public_bp, url_prefix='/public')
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -120,15 +141,35 @@ def create_app():
     app.register_blueprint(users_bp, url_prefix='/users')
     app.register_blueprint(backup_bp, url_prefix='/backup')
     app.register_blueprint(company_bp, url_prefix='/company')
+    app.register_blueprint(admin_public_bp, url_prefix='/admin-public')
     app.register_blueprint(validation_bp, url_prefix='/api/validation')
     app.register_blueprint(payments_bp, url_prefix='/payments')
     app.register_blueprint(delivery_bp, url_prefix='/delivery')
+    app.register_blueprint(quick_sale_bp, url_prefix='/quick-sale')
+    app.register_blueprint(nfe_bp, url_prefix='/nfe-integration')
 
     # Serve uploaded files
     @app.route('/uploads/<path:filename>')
     def uploaded_file(filename):
         from flask import send_from_directory
         return send_from_directory('uploads', filename)
+
+    # Error handlers
+    @app.errorhandler(404)
+    def not_found_error(error):
+        from flask import render_template
+        return render_template('errors/404.html'), 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        from flask import render_template
+        db.session.rollback()
+        return render_template('errors/500.html'), 500
+
+    @app.errorhandler(403)
+    def forbidden_error(error):
+        from flask import render_template
+        return render_template('errors/403.html'), 403
 
     # Create tables
     with app.app_context():

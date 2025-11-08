@@ -157,55 +157,109 @@ class WhatsAppService:
             }
     
     def _create_order_confirmation_message(self, order):
-        """Cria mensagem de confirmação do pedido"""
+        """Cria mensagem de confirmação do pedido com layout profissional"""
         company_name = Config.COMPANY_NAME or "Sistema Distribuidor"
         
-        message = f"""🛒 *PEDIDO CONFIRMADO* - {company_name}
+        # Montar endereço completo do cliente para entrega
+        customer_address_parts = []
 
-📋 *Pedido #{order.id}*
-👤 Cliente: {order.customer.name}
-📞 Telefone: {order.customer.phone}
-📅 Data: {order.created_at.strftime('%d/%m/%Y %H:%M')}
+        # Rua e número (se estiver no campo address)
+        if order.customer.address:
+            customer_address_parts.append(order.customer.address)
 
-🛍️ *Itens do Pedido:*
+        # Bairro
+        if order.customer.neighborhood:
+            customer_address_parts.append(order.customer.neighborhood)
+
+        # Cidade/Estado
+        if order.customer.city and order.customer.state:
+            customer_address_parts.append(f"{order.customer.city}/{order.customer.state}")
+
+        # CEP
+        if order.customer.cep:
+            customer_address_parts.append(f"CEP: {order.customer.cep}")
+
+        customer_address = ", ".join(customer_address_parts) if customer_address_parts else "Endereço não informado"
+        
+        # Header Profissional
+        message = f"""* PEDIDO CONFIRMADO * - {company_name}
+================================================
+
+* DETALHES DO PEDIDO *
+• Número: #{order.id}
+• Cliente: {order.customer.name}
+• Telefone: {order.customer.phone}
+• Data: {order.created_at.strftime('%d/%m/%Y %H:%M')}
+
+* ENDEREÇO DE ENTREGA *
+{'-' * 50}
+{customer_address if customer_address else 'Endereço não informado'}
+
+* ITENS SOLICITADOS *
+{'-' * 50}
 """
         
+        # Itens do Pedido
         for item in order.order_items:
             total_item = (item.unit_price * item.quantity) - item.discount
             message += f"• {item.product.name}\n"
             message += f"  Qtd: {item.quantity} x R$ {item.unit_price:.2f}\n"
             if item.discount > 0:
                 message += f"  Desconto: R$ {item.discount:.2f}\n"
-            message += f"  Total: R$ {total_item:.2f}\n\n"
+            message += f"  Subtotal: R$ {total_item:.2f}\n\n"
         
-        message += f"💰 *Total do Pedido: R$ {order.total:.2f}*\n\n"
+        # Total e Status
+        message += f"{'-' * 50}\n"
+        message += f"* VALOR TOTAL: R$ {order.total:.2f} *\n\n"
+        
+        message += "* PAGAMENTO & STATUS *\n"
+        message += f"{'-' * 50}\n"
         
         # Status do pagamento
         if order.payment_method == 'mercadopago':
             if order.payment_status == 'paid':
-                message += "✅ *Pagamento Confirmado* (MercadoPago)\n"
+                message += "• Método: MercadoPago\n"
+                message += "• Status: PAGAMENTO CONFIRMADO\n"
             elif order.payment_status == 'pending':
-                message += "⏳ *Pagamento Pendente* (MercadoPago)\n"
+                message += "• Método: MercadoPago\n"
+                message += "• Status: PAGAMENTO PENDENTE\n"
             else:
-                message += f"💳 *Método:* MercadoPago\n"
+                message += f"• Método: MercadoPago\n"
+                message += f"• Status: {order.status.upper()}\n"
         else:
             payment_methods = {
-                'cash': '💵 Dinheiro',
-                'card': '💳 Cartão',
-                'pix': '📱 PIX',
-                'bank_slip': '📄 Boleto'
+                'cash': 'Dinheiro',
+                'card': 'Cartão',
+                'pix': 'PIX',
+                'bank_slip': 'Boleto'
             }
-            message += f"💳 *Método:* {payment_methods.get(order.payment_method, order.payment_method)}\n"
+            status_translations = {
+                'pending': 'PENDENTE',
+                'confirmed': 'CONFIRMADO',
+                'preparing': 'PREPARANDO',
+                'in_transit': 'A CAMINHO',
+                'delivered': 'ENTREGUE',
+                'cancelled': 'CANCELADO'
+            }
+            
+            message += f"• Método: {payment_methods.get(order.payment_method, order.payment_method)}\n"
+            message += f"• Status: {status_translations.get(order.status, order.status.upper())}\n"
         
-        message += f"\n📊 *Status:* {order.status.upper()}\n"
-        
+        # Observações
         if order.notes:
-            message += f"\n📝 *Observações:*\n{order.notes}\n"
+            message += "\n* OBSERVAÇÕES *\n"
+            message += f"{'-' * 50}\n"
+            message += f"{order.notes}\n"
         
-        message += f"\n📞 *Contato:* {self.company_phone}\n"
-        message += f"🏠 *Endereço:* {Config.COMPANY_ADDRESS or 'Consulte conosco'}\n"
+        # Contato e Localização
+        message += "\n* CONTATO & LOCALIZAÇÃO *\n"
+        message += f"{'-' * 50}\n"
+        message += f"Loja: {company_name}\n"
+        message += f"Contato: {self.company_phone}\n"
+        message += f"Endereço: {Config.COMPANY_ADDRESS or 'Consulte conosco'}\n"
         
-        message += "\n✅ *Obrigado por escolher nossos serviços!*"
+        # Footer Profissional
+        message += "\n* Obrigado por escolher nossos serviços! *"
         
         return message
     

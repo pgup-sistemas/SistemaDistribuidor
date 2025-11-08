@@ -1,13 +1,61 @@
-from flask import render_template
+from flask import render_template, url_for
 from flask_mail import Message
 from app import mail
+from datetime import datetime, timedelta
+from itsdangerous import URLSafeTimedSerializer
 from config import Config
 import logging
+import uuid
 
 class EmailService:
     def __init__(self):
         self.from_email = Config.MAIL_DEFAULT_SENDER
         self.company_name = Config.COMPANY_NAME
+        self.token_serializer = URLSafeTimedSerializer(Config.SECRET_KEY)
+        
+    def send_password_reset(self, user):
+        """
+        Envia email com link para redefinição de senha
+        
+        Args:
+            user: Objeto User
+        """
+        try:
+            # Gerar token seguro que expira em 1 hora
+            token = self.token_serializer.dumps(user.email, salt='password-reset-salt')
+            
+            # URL de redefinição (válida por 1 hora)
+            reset_url = url_for(
+                'auth.reset_password',
+                token=token,
+                _external=True
+            )
+            
+            subject = f"Redefinir Senha - {self.company_name}"
+            
+            msg = Message(
+                subject=subject,
+                recipients=[user.email],
+                sender=self.from_email
+            )
+            
+            # Renderizar template HTML do email
+            msg.html = render_template('emails/reset_password.html',
+                                     user=user,
+                                     reset_url=reset_url)
+            msg.body = render_template('emails/reset_password.txt',
+                                     user=user,
+                                     reset_url=reset_url)
+            
+            # Enviar email
+            mail.send(msg)
+            logging.info(f"Email de redefinição de senha enviado para {user.email}")
+            
+            return True
+            
+        except Exception as e:
+            logging.error(f"Erro ao enviar email de redefinição de senha: {str(e)}")
+            return False
         
     def send_order_confirmation(self, order, customer_email):
         """

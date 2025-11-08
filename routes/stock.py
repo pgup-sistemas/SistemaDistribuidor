@@ -101,8 +101,15 @@ def movement():
             
             db.session.add(movement)
             db.session.commit()
-            
-            flash('Movimentação registrada com sucesso!', 'success')
+
+            # Mensagem mais informativa baseada no tipo de movimentação
+            if movement_type == 'entry':
+                flash(f'Entrada de {quantity} {product.unit} do produto "{product.name}" registrada com sucesso!', 'success')
+            elif movement_type == 'exit':
+                flash(f'Saída de {quantity} {product.unit} do produto "{product.name}" registrada com sucesso!', 'success')
+            elif movement_type == 'adjustment':
+                flash(f'Estoque do produto "{product.name}" ajustado para {quantity} {product.unit}!', 'success')
+
             return redirect(url_for('stock.movements'))
             
         except Exception as e:
@@ -122,6 +129,104 @@ def alerts():
     ).order_by(Product.minimum_stock.desc()).all()
 
     return render_template('stock/alerts.html', products=low_stock_products)
+
+@stock_bp.route('/inventory-scan')
+@login_required
+def inventory_scan():
+    """Página de inventário com scanner de código de barras"""
+    if current_user.role not in ['admin', 'stock_manager', 'manager']:
+        flash('Acesso negado.', 'error')
+        return redirect(url_for('dashboard.index'))
+
+    return render_template('stock/inventory_scan.html')
+
+@stock_bp.route('/api/inventory-scan', methods=['POST'])
+@login_required
+def api_inventory_scan():
+    """API para escanear produto no inventário"""
+    if current_user.role not in ['admin', 'stock_manager', 'manager']:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+
+    data = request.get_json()
+    sku = data.get('sku', '').strip().upper()
+
+    if not sku:
+        return jsonify({'success': False, 'message': 'SKU é obrigatório'}), 400
+
+    product = Product.query.filter_by(sku=sku, active=True).first()
+
+    if not product:
+        return jsonify({'success': False, 'message': f'Produto com SKU "{sku}" não encontrado'}), 404
+
+    return jsonify({
+        'success': True,
+        'product': {
+            'id': product.id,
+            'sku': product.sku,
+            'name': product.name,
+            'current_stock': product.current_stock,
+            'minimum_stock': product.minimum_stock,
+            'unit': product.unit,
+            'category': product.category.name if product.category else None
+        }
+    })
+
+@stock_bp.route('/api/inventory-update', methods=['POST'])
+@login_required
+def api_inventory_update():
+    """API para atualizar quantidade no inventário"""
+    if current_user.role not in ['admin', 'stock_manager', 'manager']:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+
+    data = request.get_json()
+    product_id = data.get('product_id')
+    new_quantity = data.get('quantity')
+    reason = data.get('reason', 'Ajuste de inventário via scanner')
+
+    if not product_id or new_quantity is None:
+        return jsonify({'success': False, 'message': 'Dados obrigatórios faltando'}), 400
+
+    try:
+        new_quantity = int(new_quantity)
+        if new_quantity < 0:
+            return jsonify({'success': False, 'message': 'Quantidade não pode ser negativa'}), 400
+
+        product = Product.query.get_or_404(product_id)
+
+        # Calcular diferença para o movimento de estoque
+        quantity_diff = new_quantity - product.current_stock
+
+        # Atualizar estoque
+        product.current_stock = new_quantity
+
+        # Criar movimento de estoque
+        movement = StockMovement(
+            product_id=product.id,
+            movement_type='adjustment' if quantity_diff != 0 else 'entry',
+            quantity=abs(quantity_diff) if quantity_diff != 0 else new_quantity,
+            reason=reason,
+            user_id=current_user.id
+        )
+
+        db.session.add(movement)
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'message': f'Estoque de "{product.name}" atualizado para {new_quantity} {product.unit}',
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'current_stock': product.current_stock,
+                'unit': product.unit
+            }
+        })
+
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Quantidade deve ser um número válido'}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': 'Erro ao atualizar inventário'}), 500
 
 @stock_bp.route('/import', methods=['GET', 'POST'])
 @login_required
@@ -295,10 +400,10 @@ def handle_spreadsheet_import():
 
             if success_count > 0:
                 db.session.commit()
-                flash(f'Importação concluída! {success_count} produtos processados com sucesso.', 'success')
+                flash(f'Importação de planilha concluída! {success_count} produtos processados com sucesso.', 'success')
 
             if error_count > 0:
-                flash(f'{error_count} erros encontrados: {"; ".join(errors[:5])}', 'warning')
+                flash(f'Importação concluída com avisos: {error_count} erros encontrados. Principais: {"; ".join(errors[:3])}', 'warning')
 
         except Exception as e:
             db.session.rollback()
@@ -310,14 +415,15 @@ def handle_spreadsheet_import():
     return redirect(url_for('stock.bulk_import'))
 
 def handle_invoice_import():
-    """Handle invoice-based import (simplified version)"""
+    """Handle invoice-based import with automatic SKU generation"""
     if 'invoice_file' not in request.files:
         flash('Nenhum arquivo de nota fiscal selecionado.', 'error')
         return redirect(request.url)
 
     file = request.files['invoice_file']
     supplier_id = request.form.get('supplier_id')
-    
+    auto_generate_sku = request.form.get('auto_generate_sku') == 'on'
+
     if not supplier_id:
         flash('Fornecedor é obrigatório para importação de nota fiscal.', 'error')
         return redirect(request.url)
@@ -335,7 +441,7 @@ def handle_invoice_import():
                 df = pd.read_excel(file)
 
             # Expected columns for invoice: product_code, product_name, quantity, unit_price
-            required_columns = ['product_code', 'product_name', 'quantity', 'unit_price']
+            required_columns = ['product_name', 'quantity', 'unit_price']
 
             # Check if required columns exist
             missing_columns = [col for col in required_columns if col not in df.columns]
@@ -346,38 +452,63 @@ def handle_invoice_import():
             success_count = 0
             error_count = 0
             errors = []
+            created_products = []
+
+            # Get next SKU number if auto-generating
+            next_sku = 1
+            if auto_generate_sku:
+                existing_skus = [int(p.sku) for p in Product.query.all() if p.sku and p.sku.isdigit()]
+                next_sku = max(existing_skus or [0]) + 1
 
             for index, row in df.iterrows():
                 try:
-                    # Look for existing product by SKU or create new
-                    product = Product.query.filter_by(sku=str(row['product_code']), active=True).first()
-                    
+                    product_name = str(row['product_name']).strip()
+                    quantity = int(row['quantity'])
+                    unit_price = float(row['unit_price'])
+
+                    # Determine SKU
+                    if auto_generate_sku:
+                        sku = f"{next_sku:04d}"
+                        next_sku += 1
+                    elif 'product_code' in row and pd.notna(row['product_code']):
+                        sku = str(row['product_code']).strip().upper()
+                    else:
+                        sku = f"NF_{index + 1:04d}"
+
+                    # Look for existing product by SKU or name
+                    product = Product.query.filter(
+                        (Product.sku == sku) |
+                        ((Product.name == product_name) & (Product.supplier_id == int(supplier_id)))
+                    ).first()
+
                     if not product:
                         # Create new product from invoice
                         product = Product(
-                            sku=str(row['product_code']),
-                            name=str(row['product_name']),
+                            sku=sku,
+                            name=product_name,
                             description=f'Produto importado da NF: {file.filename}',
-                            sale_price=float(row['unit_price']) * 1.3,  # 30% markup
-                            cost_price=float(row['unit_price']),
-                            current_stock=int(row['quantity']),
-                            minimum_stock=5,
+                            sale_price=unit_price * 1.3,  # 30% markup
+                            cost_price=unit_price,
+                            current_stock=quantity,
+                            minimum_stock=max(1, quantity // 10),  # 10% do estoque inicial
                             unit='UN',
-                            supplier_id=supplier_id
+                            supplier_id=int(supplier_id)
                         )
                         db.session.add(product)
                         db.session.flush()
+                        created_products.append(product.name)
                     else:
                         # Update existing product
-                        product.current_stock += int(row['quantity'])
-                        product.cost_price = float(row['unit_price'])  # Update cost price
+                        old_stock = product.current_stock
+                        product.current_stock += quantity
+                        product.cost_price = unit_price  # Update cost price
 
                     # Create stock movement
                     movement = StockMovement(
                         product_id=product.id,
                         movement_type='entry',
-                        quantity=int(row['quantity']),
-                        reason=f'Entrada NF: {file.filename}',
+                        quantity=quantity,
+                        reason=f'Entrada NF: {file.filename} (SKU: {sku})',
                         user_id=current_user.id
                     )
                     db.session.add(movement)
@@ -392,8 +523,11 @@ def handle_invoice_import():
                 db.session.commit()
                 flash(f'Importação de nota fiscal concluída! {success_count} produtos processados.', 'success')
 
+                if created_products:
+                    flash(f'Produtos criados: {", ".join(created_products[:5])}{"..." if len(created_products) > 5 else ""}', 'info')
+
             if error_count > 0:
-                flash(f'{error_count} erros encontrados: {"; ".join(errors[:5])}', 'warning')
+                flash(f'Importação concluída com avisos: {error_count} erros encontrados. Principais: {"; ".join(errors[:3])}', 'warning')
 
         except Exception as e:
             db.session.rollback()

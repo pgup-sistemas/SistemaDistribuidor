@@ -3,8 +3,9 @@ import json
 import logging
 from datetime import datetime
 from config import Config
+from services.payment_factory import PaymentGateway
 
-class MercadoPagoService:
+class MercadoPagoService(PaymentGateway):
     def __init__(self):
         """Inicializa o serviço do MercadoPago"""
         if not Config.MERCADOPAGO_ACCESS_TOKEN:
@@ -63,9 +64,8 @@ class MercadoPagoService:
                     "zip_code": order.customer.cep or "00000000"
                 }
             
-            # Detectar URL base do ambiente
-            import os
-            base_url = os.environ.get('REPL_URL', 'https://f58d4638-3bcb-425b-bf0a-a799ce8f5304-00-2qepgxf1rsafs.riker.replit.dev')
+            # Usar URL base da configuração
+            base_url = Config.BASE_URL
             
             # Configuração da preferência
             preference_data = {

@@ -15,8 +15,24 @@
         <!-- Top Products -->
         <div class="col-md-8">
             <div class="card mb-4">
-                <div class="card-header">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="fas fa-trophy"></i> Produtos Mais Vendidos</h5>
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3">
+                            Mostrando {{ top_products|length }} de {{ total_products }} produtos
+                        </small>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="perPageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ per_page }} por página
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="perPageDropdown">
+                                <li><a class="dropdown-item" href="{{ url_for('reports.products', page=1, per_page=10) }}">10 por página</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('reports.products', page=1, per_page=25) }}">25 por página</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('reports.products', page=1, per_page=50) }}">50 por página</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('reports.products', page=1, per_page=100) }}">100 por página</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
                 <div class="card-body">
                     {% if top_products %}
@@ -34,8 +50,8 @@
                                 {% for product in top_products %}
                                 <tr>
                                     <td>
-                                        <span class="badge bg-{% if loop.index <= 3 %}warning{% else %}secondary{% endif %} rounded-pill">
-                                            {{ loop.index }}º
+                                        <span class="badge bg-{% if loop.index + ((page - 1) * per_page) <= 3 %}warning{% else %}secondary{% endif %} rounded-pill">
+                                            {{ loop.index + ((page - 1) * per_page) }}º
                                         </span>
                                     </td>
                                     <td>
@@ -48,6 +64,80 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- Pagination -->
+                    {% if total_pages > 1 %}
+                    <nav aria-label="Navegação de páginas" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <!-- Previous -->
+                            {% if has_prev %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('reports.products', page=prev_page, per_page=per_page) }}">
+                                    <i class="fas fa-chevron-left"></i> Anterior
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link"><i class="fas fa-chevron-left"></i> Anterior</span>
+                            </li>
+                            {% endif %}
+
+                            <!-- Page numbers -->
+                            {% set start_page = [1, page - 2]|max %}
+                            {% set end_page = [total_pages, page + 2]|min %}
+
+                            {% if start_page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('reports.products', page=1, per_page=per_page) }}">1</a>
+                            </li>
+                            {% if start_page > 2 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            {% endif %}
+
+                            {% for page_num in range(start_page, end_page + 1) %}
+                            <li class="page-item {% if page_num == page %}active{% endif %}">
+                                <a class="page-link" href="{{ url_for('reports.products', page=page_num, per_page=per_page) }}">{{ page_num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if end_page < total_pages %}
+                            {% if end_page < total_pages - 1 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('reports.products', page=total_pages, per_page=per_page) }}">{{ total_pages }}</a>
+                            </li>
+                            {% endif %}
+
+                            <!-- Next -->
+                            {% if has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('reports.products', page=next_page, per_page=per_page) }}">
+                                    Próximo <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">Próximo <i class="fas fa-chevron-right"></i></span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+
+                    <!-- Pagination Info -->
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            Página {{ page }} de {{ total_pages }} •
+                            Total: {{ total_products }} produtos
+                        </small>
+                    </div>
+                    {% endif %}
+
                     {% else %}
                     <div class="text-center py-4">
                         <i class="fas fa-box fa-3x text-muted mb-3"></i>

@@ -10,6 +10,9 @@
         </div>
         <div class="card-body">
             <form method="POST" id="orderForm">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
@@ -17,7 +20,7 @@
                             <select class="form-select" id="customer_id" name="customer_id" required>
                                 <option value="">Selecionar cliente</option>
                                 {% for customer in customers %}
-                                <option value="{{ customer.id }}" 
+                                <option value="{{ customer.id }}"
                                         {% if selected_customer_id == customer.id %}selected{% endif %}>
                                     {{ customer.name }}
                                     {% if customer.phone %} - {{ customer.phone }}{% endif %}
@@ -44,7 +47,7 @@
                             </select>
                             <div class="form-text">
                                 <small class="text-muted">
-                                    <i class="fas fa-info-circle"></i> 
+                                    <i class="fas fa-info-circle"></i>
                                     MercadoPago permite pagamento com cartão, PIX e boleto online
                                 </small>
                             </div>
@@ -68,7 +71,7 @@
                                 <select class="form-select" id="product_select">
                                     <option value="">Selecionar produto</option>
                                     {% for product in products %}
-                                    <option value="{{ product.id }}" 
+                                    <option value="{{ product.id }}"
                                             data-name="{{ product.name }}"
                                             data-price="{{ product.sale_price }}"
                                             data-stock="{{ product.current_stock }}"

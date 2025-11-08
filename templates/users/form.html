@@ -15,6 +15,7 @@
                 </div>
                 <div class="card-body">
                     <form method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -61,11 +62,15 @@
                                     <label for="password" class="form-label">
                                         Senha {% if not user %}*{% endif %}
                                     </label>
-                                    <input type="password" class="form-control" id="password" name="password" 
-                                           {% if not user %}required{% endif %} minlength="6">
-                                    {% if user %}
-                                    <div class="form-text">Deixe em branco para manter a senha atual</div>
-                                    {% endif %}
+                                    <input type="password" class="form-control" id="password" name="password"
+                                           {% if not user %}required{% endif %} minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}">
+                                    <div class="form-text">
+                                        {% if user %}
+                                        Deixe em branco para manter a senha atual.
+                                        {% else %}
+                                        Mínimo 8 caracteres, com maiúscula, minúscula e número.
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -114,40 +114,24 @@ DistribuidorApp.utils = {
         }
     },
 
-    // Show toast notification
+    // Show toast notification using Toastr
     showToast: function(message, type = 'info', duration = 5000) {
-        // Create toast container if it doesn't exist
-        let container = document.getElementById('toast-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'toast-container';
-            container.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 9999;
-                max-width: 350px;
-            `;
-            document.body.appendChild(container);
-        }
+        // Map Bootstrap types to Toastr types
+        const toastrType = type === 'danger' ? 'error' : type;
 
-        // Create toast element
-        const toast = document.createElement('div');
-        toast.className = `alert alert-${type} alert-dismissible fade show`;
-        toast.style.cssText = 'margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
-        toast.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
+        // Configure Toastr options
+        const options = {
+            timeOut: duration,
+            extendedTimeOut: duration / 2, // Time to extend on hover
+            closeButton: true,
+            progressBar: true,
+            positionClass: 'toast-top-right',
+            preventDuplicates: false,
+            newestOnTop: true
+        };
 
-        container.appendChild(toast);
-
-        // Auto-remove after duration
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.remove();
-            }
-        }, duration);
+        // Show the toast
+        toastr[toastrType](message, '', options);
     },
 
     // Confirm dialog

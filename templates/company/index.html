@@ -196,7 +196,7 @@
                     <div class="col-md-4 mb-3">
                         <strong>Cabeçalho dos Recibos:</strong>
                         {% if company.receipt_header %}
-                        <div class="border p-2 mt-2 bg-light">
+                        <div class="border p-2 mt-2" style="background-color: #f8f9fa; color: #212529;">
                             {{ company.receipt_header|nl2br }}
                         </div>
                         {% else %}
@@ -206,7 +206,7 @@
                     <div class="col-md-4 mb-3">
                         <strong>Rodapé dos Recibos:</strong>
                         {% if company.receipt_footer %}
-                        <div class="border p-2 mt-2 bg-light">
+                        <div class="border p-2 mt-2" style="background-color: #f8f9fa; color: #212529;">
                             {{ company.receipt_footer|nl2br }}
                         </div>
                         {% else %}
@@ -216,7 +216,7 @@
                     <div class="col-md-4 mb-3">
                         <strong>Observações dos Pedidos:</strong>
                         {% if company.order_notes %}
-                        <div class="border p-2 mt-2 bg-light">
+                        <div class="border p-2 mt-2" style="background-color: #f8f9fa; color: #212529;">
                             {{ company.order_notes|nl2br }}
                         </div>
                         {% else %}

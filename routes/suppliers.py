@@ -57,8 +57,8 @@ def new():
         
         db.session.add(supplier)
         db.session.commit()
-        
-        flash('Fornecedor criado com sucesso!', 'success')
+
+        flash(f'Fornecedor "{supplier.name}" criado com sucesso!', 'success')
         return redirect(url_for('suppliers.index'))
     
     return render_template('suppliers/form.html')
@@ -84,7 +84,7 @@ def edit(id):
             return render_template('suppliers/form.html', supplier=supplier)
         
         db.session.commit()
-        flash('Fornecedor atualizado com sucesso!', 'success')
+        flash(f'Fornecedor "{supplier.name}" atualizado com sucesso!', 'success')
         return redirect(url_for('suppliers.index'))
     
     return render_template('suppliers/form.html', supplier=supplier)
@@ -99,6 +99,6 @@ def delete(id):
     supplier = Supplier.query.get_or_404(id)
     supplier.active = False
     db.session.commit()
-    
-    flash('Fornecedor removido com sucesso!', 'success')
+
+    flash(f'Fornecedor "{supplier.name}" removido com sucesso!', 'success')
     return redirect(url_for('suppliers.index'))

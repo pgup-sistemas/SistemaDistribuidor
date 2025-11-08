@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Cupom - Venda {{ sale.sale_number }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-receipt"></i> Cupom Fiscal - Venda Rápida</h4>
+                <div class="float-end">
+                    <button class="btn btn-sm btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="window.close()">
+                        <i class="fas fa-times"></i> Fechar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Recibo em formato térmico -->
+                <div style="font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.2; background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6;">
+
+                    <!-- Header -->
+                    <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 10px; margin-bottom: 15px;">
+                        {% if company %}
+                        <div style="font-weight: bold; font-size: 14px;">{{ company.trade_name or company.company_name }}</div>
+                        {% if company.cnpj %}
+                        <div>CNPJ: {{ company.cnpj[:2] }}.{{ company.cnpj[2:5] }}.{{ company.cnpj[5:8] }}/{{ company.cnpj[8:12] }}-{{ company.cnpj[12:] }}</div>
+                        {% endif %}
+                        {% if company.address %}
+                        <div style="font-size: 10px;">{{ company.address }}{% if company.address_number %}, {{ company.address_number }}{% endif %}</div>
+                        {% endif %}
+                        {% if company.receipt_header %}
+                        <div style="margin-top: 8px; font-weight: bold; font-size: 11px;">{{ company.receipt_header|nl2br }}</div>
+                        {% endif %}
+                        {% else %}
+                        <div style="font-weight: bold; font-size: 14px;">Sistema Distribuidor</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Sale Info -->
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: bold;">CUPOM FISCAL</div>
+                        <div><strong>Venda:</strong> {{ sale.sale_number }}</div>
+                        <div><strong>Data:</strong> {{ sale.created_at.strftime('%d/%m/%Y %H:%M') }}</div>
+                        <div><strong>Atendente:</strong> {{ sale.user.name }}</div>
+                    </div>
+
+                    <!-- Items -->
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 8px;">ITENS DA VENDA</div>
+                        {% for item in sale.items %}
+                        <div style="margin-bottom: 8px;">
+                            <div style="font-weight: bold;">{{ item.product_name }}</div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>{{ item.quantity }} x R$ {{ "%.2f"|format(item.unit_price) }}</span>
+                                <span style="font-weight: bold;">R$ {{ "%.2f"|format(item.total) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Total -->
+                    <div style="border-top: 1px dashed #000; padding-top: 10px; text-align: right; font-weight: bold; font-size: 14px;">
+                        <div>TOTAL: R$ {{ "%.2f"|format(sale.total) }}</div>
+                        <div style="font-size: 12px; font-weight: normal;">
+                            Pagamento:
+                            {% if sale.payment_method == 'cash' %}Dinheiro
+                            {% elif sale.payment_method == 'card' %}Cartão
+                            {% elif sale.payment_method == 'pix' %}PIX
+                            {% elif sale.payment_method == 'bank_slip' %}Boleto
+                            {% else %}{{ sale.payment_method }}{% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dashed #000; font-size: 10px;">
+                        {% if company and company.receipt_footer %}
+                        <div>{{ company.receipt_footer|nl2br }}</div>
+                        {% if company.pix_key %}
+                        <div style="margin-top: 5px;"><strong>PIX:</strong> {{ company.pix_key }}</div>
+                        {% endif %}
+                        {% else %}
+                        <div><strong>OBRIGADO PELA PREFERÊNCIA!</strong></div>
+                        <div>Volte sempre!</div>
+                        {% endif %}
+                        <div style="margin-top: 8px; color: #666;">
+                            Sistema PDV v1.0<br>
+                            Emitido em {{ sale.created_at.strftime('%d/%m/%Y às %H:%M:%S') }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ações -->
+                <div class="mt-3 text-center">
+                    <a href="{{ url_for('quick_sale.index') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nova Venda
+                    </a>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .card-header, .card-body, .mt-3, .btn {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    body {
+        background: white !important;
+    }
+}
+</style>
+{% endblock %}
